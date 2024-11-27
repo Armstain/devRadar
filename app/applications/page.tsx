@@ -1,9 +1,36 @@
+"use client";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import BlurFade from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
 import { MagicCard } from "@/components/ui/magic-card";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+interface Application {
+  id: string;
+  company: string;
+  position: string;
+  status: string;
+  link: string;
+  notes: string;
+  createdAt: string;
+}
 
 export default function ApplicationsPage() {
+  const { data: applications, isLoading } = useQuery<Application[]>({
+    queryKey: ['applications'],
+    queryFn: async () => {
+      const response = await axios.get('/api/applications');
+      return response.data;
+    },
+  });
+
+  // Calculate counts for each status
+  const counts = applications?.reduce((acc, app) => {
+    acc[app.status] = (acc[app.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -17,32 +44,32 @@ export default function ApplicationsPage() {
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Applied</p>
-            <p className="text-2xl font-bold">8</p>
+              <p className="text-2xl font-bold">{counts['applied'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
-        <BlurFade delay={0.5} inView>
+        <BlurFade key="in_progress" delay={0.5} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">In Progress</p>
-            <p className="text-2xl font-bold">3</p>
-          </div>
+              <p className="text-sm text-muted-foreground">In Progress</p>
+              <p className="text-2xl font-bold">{counts['in_progress'] || 0}</p>
+            </div>
           </MagicCard>
         </BlurFade>
-        <BlurFade delay={0.75} inView>
+        <BlurFade key="offers" delay={0.75} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Offers</p>
-            <p className="text-2xl font-bold">1</p>
-          </div>
+              <p className="text-sm text-muted-foreground">Offers</p>
+              <p className="text-2xl font-bold">{counts['offers'] || 0}</p>
+            </div>
           </MagicCard>
         </BlurFade>
-        <BlurFade delay={1} inView>
+        <BlurFade key="rejected" delay={1} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Rejected</p>
-            <p className="text-2xl font-bold">4</p>
-          </div>
+              <p className="text-2xl font-bold">{counts['rejected'] || 0}</p>
+            </div>
           </MagicCard>
         </BlurFade>
       </div>
@@ -75,23 +102,28 @@ export default function ApplicationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                <tr className="hover:bg-muted/50">
-                  <td className="py-3 px-4">Google</td>
-                  <td className="py-3 px-4">Senior Frontend Developer</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">
-                      In Progress
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">2024-03-15</td>
-                  <td className="py-3 px-4">2024-03-18</td>
-                  <td className="py-3 px-4">
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
-                  </td>
-                </tr>
-                {/* Add more rows as needed */}
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="py-4 text-center">Loading...</td>
+                  </tr>
+                ) : applications?.map((app) => (
+                  <tr key={app.id} className="hover:bg-muted/50">
+                    <td className="py-3 px-4">{app.company}</td>
+                    <td className="py-3 px-4">{app.position}</td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">{new Date(app.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 px-4">{new Date(app.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 px-4">
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -99,4 +131,4 @@ export default function ApplicationsPage() {
       </MagicCard>
     </div>
   );
-} 
+}

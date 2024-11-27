@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +20,8 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import axios from 'axios';
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ApplicationFormValues {
   company: string;
@@ -32,6 +33,8 @@ interface ApplicationFormValues {
 
 export function ApplicationDialog() {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+  
   const form = useForm<ApplicationFormValues>({
     defaultValues: {
       company: "",
@@ -42,29 +45,40 @@ export function ApplicationDialog() {
     },
   });
 
-  const onSubmit = (data: ApplicationFormValues) => {
-    const statusMessages = {
-      'applied': '🚀 Application submitted successfully!',
-      'in-progress': '📝 Application marked as in progress',
-      'offer': '🎉 Congratulations on the offer!',
-      'rejected': '💪 Keep going! More opportunities ahead'
-    };
+  const onSubmit = async (data: ApplicationFormValues) => {
+    try {
+      const response = await axios.post('/api/applications', data);
+      
+      if (response.status === 200) {
+        // Invalidate and refetch applications
+        await queryClient.invalidateQueries({ queryKey: ['applications'] });
+        
+        const statusMessages = {
+          'applied': '🚀 Application submitted successfully!',
+          'in-progress': '📝 Application marked as in progress',
+          'offer': '🎉 Congratulations on the offer!',
+          'rejected': '💪 Keep going! More opportunities ahead'
+        };
 
-    const message = statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully';
-    
-    toast(message, {
-      style: {
-        background: data.status === 'offer' ? '#10B981' : '#1E293B',
-        color: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-      },
-      duration: 3000,
-    });
+        const message = statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully';
+        
+        toast(message, {
+          style: {
+            background: data.status === 'offer' ? '#10B981' : '#1E293B',
+            color: '#fff',
+            padding: '16px',
+            borderRadius: '8px',
+          },
+          duration: 3000,
+        });
 
-    console.log(data);
-    setOpen(false);
-    form.reset();
+        setOpen(false);
+        form.reset();
+      }
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      toast.error("Failed to submit application. Please try again.");
+    }
   };
 
   const onClose = () => {
@@ -139,4 +153,4 @@ export function ApplicationDialog() {
       </DialogContent>
     </Dialog>
   );
-} 
+}

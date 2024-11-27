@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Sidebar from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Toaster } from 'react-hot-toast';
+import QueryProvider from "./providers/query-client-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -54,26 +55,28 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="flex h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-auto">
-                <SignedIn>
-                  <div className="flex justify-end p-4">
-                    <UserButton />
-                  </div>
-                  {children}
-                </SignedIn>
-                <SignedOut>
-                  <div className="flex h-full items-center justify-center">
-                    <SignInButton mode="modal">
-                      <Button size="lg">
-                        Sign In
-                      </Button>
-                    </SignInButton>
-                  </div>
-                </SignedOut>
-              </main>
-            </div>
+            <QueryProvider>
+              <div className="flex h-screen">
+                <Sidebar />
+                <main className="flex-1 overflow-auto">
+                  <SignedIn>
+                    <div className="flex justify-end p-4">
+                      <UserButton />
+                    </div>
+                    {children}
+                  </SignedIn>
+                  <SignedOut>
+                    <div className="flex h-full items-center justify-center">
+                      <SignInButton mode="modal">
+                        <Button size="lg">
+                          Sign In
+                        </Button>
+                      </SignInButton>
+                    </div>
+                  </SignedOut>
+                </main>
+              </div>
+            </QueryProvider>
           </ThemeProvider>
           <Toaster position="bottom-right" />
         </body>
