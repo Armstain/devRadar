@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import BlurFade from "@/components/ui/blur-fade";
@@ -21,7 +22,15 @@ export default function ApplicationsPage() {
     queryKey: ['applications'],
     queryFn: async () => {
       const response = await axios.get('/api/applications');
-      return response.data;
+      return response.data.map((app: any) => ({
+        id: app._id,
+        company: app.company,
+        position: app.position,
+        status: app.status,
+        link: app.link,
+        notes: app.notes,
+        createdAt: app.createdAt,
+      }));
     },
   });
 
@@ -31,10 +40,17 @@ export default function ApplicationsPage() {
     return acc;
   }, {} as Record<string, number>) || {};
 
+  // const counts = new Map();
+  // applications?.forEach((app =>{
+  //   const status = app.status;
+  //   counts.set(status, (counts.get(status) || 0) + 1);
+  // }))
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Job Applications</h1>
+        
         <ApplicationDialog />
       </div>
 
@@ -48,11 +64,11 @@ export default function ApplicationsPage() {
             </div>
           </MagicCard>
         </BlurFade>
-        <BlurFade key="in_progress" delay={0.5} inView>
+        <BlurFade key="in-progress" delay={0.5} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">In Progress</p>
-              <p className="text-2xl font-bold">{counts['in_progress'] || 0}</p>
+              <p className="text-2xl font-bold">{counts['in-progress'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
@@ -118,9 +134,12 @@ export default function ApplicationsPage() {
                     <td className="py-3 px-4">{new Date(app.createdAt).toLocaleDateString()}</td>
                     <td className="py-3 px-4">{new Date(app.createdAt).toLocaleDateString()}</td>
                     <td className="py-3 px-4">
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm">
+                          View
+                        </Button>
+                        <ApplicationDialog application={app} />
+                      </div>
                     </td>
                   </tr>
                 ))}

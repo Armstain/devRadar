@@ -31,23 +31,37 @@ interface ApplicationFormValues {
   notes: string;
 }
 
-export function ApplicationDialog() {
+interface ApplicationDialogProps {
+  application?: {
+    id: string;
+    company: string;
+    position: string;
+    status: string;
+    link: string;
+    notes: string;
+  };
+}
+
+export function ApplicationDialog({ application }: ApplicationDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   
   const form = useForm<ApplicationFormValues>({
     defaultValues: {
-      company: "",
-      position: "",
-      status: "",
-      link: "",
-      notes: "",
+      company: application?.company || "",
+      position: application?.position || "",
+      status: application?.status || "",
+      link: application?.link || "",
+      notes: application?.notes || "",
     },
   });
 
   const onSubmit = async (data: ApplicationFormValues) => {
     try {
-      const response = await axios.post('/api/applications', data);
+      const response = application
+        ? await axios.patch('/api/applications', { id: application.id, ...data })
+        : await axios.post('/api/applications', data);
+        console.log(response);
       
       if (response.status === 200) {
         // Invalidate and refetch applications
@@ -60,11 +74,13 @@ export function ApplicationDialog() {
           'rejected': '💪 Keep going! More opportunities ahead'
         };
 
-        const message = statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully';
-        
+        const message = application
+          ? 'Application updated successfully'
+          : (statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully');
+
         toast(message, {
           style: {
-            background: data.status === 'offer' ? '#10B981' : '#1E293B',
+            background: '#1E293B',
             color: '#fff',
             padding: '16px',
             borderRadius: '8px',
@@ -76,8 +92,8 @@ export function ApplicationDialog() {
         form.reset();
       }
     } catch (error) {
-      console.error("Error submitting application:", error);
-      toast.error("Failed to submit application. Please try again.");
+      console.error("Error saving application:", error);
+      toast.error("Failed to save application. Please try again.");
     }
   };
 
@@ -89,14 +105,22 @@ export function ApplicationDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Application
-        </Button>
+        {application ? (
+          <Button variant="ghost" size="sm">
+            Edit
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Application
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Application</DialogTitle>
+          <DialogTitle>
+            {application ? 'Edit Application' : 'Add New Application'}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
           <div className="grid gap-2">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCollection, getDb } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
+import { ObjectId } from "mongodb";
 
 export async function GET() {
     try {
@@ -51,6 +52,43 @@ export async function POST(req: Request) {
         });
     } catch (error) {
         console.error("[APPLICATIONS_POST]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+
+export async function PATCH(req: Request) {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const body = await req.json();
+        const { id, ...data } = body;
+
+        console.log('Updating application:', { id, data });
+
+        const db = await getDb();
+        const result = await db.collection("applications").updateOne(
+            {
+                _id: new ObjectId(id),
+                userId
+            },
+            {
+                $set: {
+                    ...data,
+                    updatedAt: new Date()
+                }
+            }
+        );
+
+        if (!result.matchedCount) {
+            return new NextResponse("Application not found", { status: 404 });
+        }
+
+        return NextResponse.json({ id, ...data });
+    } catch (error) {
+        console.error("[APPLICATIONS_PATCH]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
