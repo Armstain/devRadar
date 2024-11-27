@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignedIn,
+  SignedOut,
+  UserButton
+} from '@clerk/nextjs'
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Sidebar from "@/components/sidebar";
+import { Button } from "@/components/ui/button";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,24 +35,49 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-         <ThemeProvider
+    <ClerkProvider 
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        layout: {
+          socialButtonsPlacement: "bottom",
+          socialButtonsVariant: "iconButton",
+        },
+      }}
+    >
+      <html suppressHydrationWarning lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-           <div className="flex h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              {children}
-            </main>
-          </div>
+            <div className="flex h-screen">
+              <Sidebar />
+              <main className="flex-1 overflow-auto">
+                <SignedIn>
+                  <div className="flex justify-end p-4">
+                    <UserButton />
+                  </div>
+                  {children}
+                </SignedIn>
+                <SignedOut>
+                  <div className="flex h-full items-center justify-center">
+                    <SignInButton mode="modal">
+                      <Button size="lg">
+                        Sign In
+                      </Button>
+                    </SignInButton>
+                  </div>
+                </SignedOut>
+              </main>
+            </div>
           </ThemeProvider>
-      </body>
-    </html>
+          <Toaster position="bottom-right" />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

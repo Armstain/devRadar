@@ -19,12 +19,57 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+
+interface ApplicationFormValues {
+  company: string;
+  position: string;
+  status: string;
+  link: string;
+  notes: string;
+}
 
 export function ApplicationDialog() {
   const [open, setOpen] = useState(false);
+  const form = useForm<ApplicationFormValues>({
+    defaultValues: {
+      company: "",
+      position: "",
+      status: "",
+      link: "",
+      notes: "",
+    },
+  });
+
+  const onSubmit = (data: ApplicationFormValues) => {
+    const statusMessages = {
+      'applied': '🚀 Application submitted successfully!',
+      'in-progress': '📝 Application marked as in progress',
+      'offer': '🎉 Congratulations on the offer!',
+      'rejected': '💪 Keep going! More opportunities ahead'
+    };
+
+    const message = statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully';
+    
+    toast(message, {
+      style: {
+        background: data.status === 'offer' ? '#10B981' : '#1E293B',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      duration: 3000,
+    });
+
+    console.log(data);
+    setOpen(false);
+    form.reset();
+  };
 
   const onClose = () => {
     setOpen(false);
+    form.reset();
   };
 
   return (
@@ -39,18 +84,26 @@ export function ApplicationDialog() {
         <DialogHeader>
           <DialogTitle>Add New Application</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
           <div className="grid gap-2">
             <label htmlFor="company">Company</label>
-            <Input id="company" placeholder="Company name" />
+            <Input 
+              {...form.register("company", { required: true })}
+              id="company" 
+              placeholder="Company name" 
+            />
           </div>
           <div className="grid gap-2">
             <label htmlFor="position">Position</label>
-            <Input id="position" placeholder="Job title" />
+            <Input 
+              {...form.register("position", { required: true })}
+              id="position" 
+              placeholder="Job title" 
+            />
           </div>
           <div className="grid gap-2">
             <label htmlFor="status">Status</label>
-            <Select>
+            <Select onValueChange={(value) => form.setValue("status", value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -64,17 +117,25 @@ export function ApplicationDialog() {
           </div>
           <div className="grid gap-2">
             <label htmlFor="link">Job Link</label>
-            <Input id="link" placeholder="URL to job posting" />
+            <Input 
+              {...form.register("link")}
+              id="link" 
+              placeholder="URL to job posting" 
+            />
           </div>
           <div className="grid gap-2">
             <label htmlFor="notes">Notes</label>
-            <Textarea id="notes" placeholder="Add any notes about the application" />
+            <Textarea 
+              {...form.register("notes")}
+              id="notes" 
+              placeholder="Add any notes about the application" 
+            />
           </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button>Save</Button>
-        </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" onClick={onClose} variant="outline">Cancel</Button>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
