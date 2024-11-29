@@ -1,10 +1,13 @@
+import { GitHubLoginButton } from "@/components/github-login-button";
 import { ModeToggle } from "@/components/ModeToggle";
 import BlurFade from "@/components/ui/blur-fade";
+import { Button } from "@/components/ui/button";
 import { MagicCard } from "@/components/ui/magic-card";
 
 export default function Home() {
   return (
     <div className="p-6 space-y-6">
+      
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Developer Dashboard</h1>
         <ModeToggle />
@@ -78,6 +81,7 @@ export default function Home() {
           </div>
         </MagicCard>
       </div>
+      <GitHubLoginButton />
     </div>
   );
 }
