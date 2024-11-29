@@ -36,9 +36,9 @@ const routes = [
     href: "/linkedin",
   },
   {
-    label: "Network",
+    label: "Interview Questions",
     icon: Users,
-    href: "/network",
+    href: "/interviews",
   },
   
 ];

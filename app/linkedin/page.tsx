@@ -114,9 +114,6 @@ export default function LinkedInActivityPage() {
                   <p className="text-sm text-muted-foreground">
                     Location: {formatLocale(linkedinData?.locale)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    LinkedIn ID: {linkedinData?.sub}
-                  </p>
                 </div>
               </div>
             </div>
@@ -126,19 +123,23 @@ export default function LinkedInActivityPage() {
         <BlurFade delay={0.5} inView>
           <MagicCard>
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+              <h2 className="text-xl font-semibold mb-4">Share Update</h2>
               <div className="space-y-4">
-                {linkedinData?.posts?.map((post: any, index: number) => (
-                  <div key={index} className="border-b last:border-0 pb-4 last:pb-0">
-                    <p className="text-sm">{post.specificContent?.['com.linkedin.ugc.ShareContent']?.text}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Posted: {new Date(post.created?.time || 0).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-                {(!linkedinData?.posts || linkedinData.posts.length === 0) && (
-                  <p className="text-sm text-muted-foreground">No recent posts found</p>
-                )}
+                <textarea 
+                  className="w-full p-2 border rounded-md"
+                  placeholder="What would you like to share on LinkedIn?"
+                  rows={3}
+                  value={postText}
+                  onChange={(e) => setPostText(e.target.value)}
+                  disabled={isPosting}
+                />
+                <button 
+                  className="px-4 py-2 bg-[#0077b5] text-white rounded-md hover:bg-[#006699] disabled:opacity-50"
+                  onClick={handleCreatePost}
+                  disabled={isPosting || !postText.trim()}
+                >
+                  {isPosting ? 'Posting...' : 'Share on LinkedIn'}
+                </button>
               </div>
             </div>
           </MagicCard>
@@ -148,35 +149,18 @@ export default function LinkedInActivityPage() {
       <BlurFade delay={0.75} inView>
         <MagicCard>
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Create Post</h2>
-            <div className="space-y-4">
-              <textarea 
-                className="w-full p-2 border rounded-md"
-                placeholder="What would you like to share?"
-                rows={3}
-                value={postText}
-                onChange={(e) => setPostText(e.target.value)}
-                disabled={isPosting}
-              />
-              <button 
-                className="px-4 py-2 bg-[#0077b5] text-white rounded-md hover:bg-[#006699] disabled:opacity-50"
-                onClick={handleCreatePost}
-                disabled={isPosting || !postText.trim()}
-              >
-                {isPosting ? 'Posting...' : 'Share on LinkedIn'}
-              </button>
+            <h2 className="text-xl font-semibold mb-4">Connection Status</h2>
+            <div className="space-y-2">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ Successfully connected with LinkedIn
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Last updated: {new Date(linkedinData?.lastUpdated || '').toLocaleString()}
+              </p>
             </div>
           </div>
         </MagicCard>
       </BlurFade>
-
-      {/* Debug section */}
-      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-4">
-        <h3 className="font-semibold mb-2">Debug Info:</h3>
-        <pre className="text-sm overflow-auto">
-          {JSON.stringify(linkedinData, null, 2)}
-        </pre>
-      </div>
     </div>
   );
 } 

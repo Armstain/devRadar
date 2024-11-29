@@ -21,25 +21,28 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "LinkedIn not connected" }, { status: 400 });
         }
 
-        // Use the newer Share API endpoint
+        // Use the correct format for the Share API
         const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${userData.linkedinToken}`,
-                'LinkedIn-Version': '202304',
                 'Content-Type': 'application/json',
+                'X-Restli-Protocol-Version': '2.0.0',
             },
             body: JSON.stringify({
                 author: `urn:li:person:${userData.linkedinUserInfo.id}`,
-                commentary: text,
-                visibility: "PUBLIC",
-                distribution: {
-                    feedDistribution: "MAIN_FEED",
-                    targetEntities: [],
-                    thirdPartyDistributionChannels: []
-                },
                 lifecycleState: "PUBLISHED",
-                isReshareDisabledByAuthor: false
+                specificContent: {
+                    "com.linkedin.ugc.ShareContent": {
+                        shareCommentary: {
+                            text: text
+                        },
+                        shareMediaCategory: "NONE"
+                    }
+                },
+                visibility: {
+                    "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+                }
             })
         });
 
@@ -54,7 +57,13 @@ export async function POST(request: Request) {
 
         const result = await response.json();
         console.log('LinkedIn post success:', result);
-        return NextResponse.json(result);
+
+        // Return success response
+        return NextResponse.json({
+            success: true,
+            message: "Post created successfully",
+            data: result
+        });
 
     } catch (error) {
         console.error("Create post error:", error);
