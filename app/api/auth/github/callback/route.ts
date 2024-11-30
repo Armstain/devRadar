@@ -39,20 +39,31 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: data.error_description }, { status: 400 });
         }
 
-        // Store token in MongoDB
+        // Fetch GitHub user data to get username
+        const userResponse = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `Bearer ${data.access_token}`,
+                'Accept': 'application/json',
+            },
+        });
+
+        const githubUser = await userResponse.json();
+
+        // Store token and username in MongoDB
         const collection = await getCollection('users');
         await collection.updateOne(
             { userId: user.id },
             {
                 $set: {
                     githubToken: data.access_token,
-                    githubTokenUpdatedAt: new Date()
+                    githubTokenUpdatedAt: new Date(),
+                    githubUsername: githubUser.login
                 }
             },
             { upsert: true }
         );
 
-        console.log('Successfully stored GitHub token');
+        console.log('Successfully stored GitHub token and username');
         return NextResponse.redirect(new URL('/dashboard?github=connected', request.url));
 
     } catch (error) {

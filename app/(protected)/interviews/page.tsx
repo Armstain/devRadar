@@ -1,17 +1,39 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import { MagicCard } from "@/components/ui/magic-card";
 import { toast } from 'react-hot-toast';
+import { PlaceholdersAndVanishInput } from '@/components/placeholders-and-vanish-input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import DotPattern from '@/components/ui/dot-pattern';
+import { cn } from '@/lib/utils';
+import Particles from '@/components/ui/particles';
+import { useTheme } from 'next-themes';
+import ShinyButton from '@/components/ui/shiny-button';
 
 export default function AIQuestionGenerator() {
     const [topic, setTopic] = useState('');
     const [difficulty, setDifficulty] = useState('intermediate');
     const [count, setCount] = useState(5);
     const [response, setResponse] = useState('');
+    const { resolvedTheme } = useTheme();
+  const [color, setColor] = useState("#ffffff");
+ 
+  useEffect(() => {
+    setColor(resolvedTheme === "dark" ? "#ffffff" : "#000000");
+  }, [resolvedTheme]);
+
+    
 
     const generateQuestions = useMutation({
         mutationFn: async () => {
@@ -34,56 +56,90 @@ export default function AIQuestionGenerator() {
     });
 
     return (
-        <MagicCard>
-            <div className="p-6">
-                <h2 className="text-xl font-semibold mb-4">AI Question Generator</h2>
+        
+            <div className="p-6 w-full">
+                <h2 className="text-xl font-semibold mb-4 text-white text-center">AI Question Generator</h2>
                 
-                <div className="space-y-4">
-                    <input
+                <div className="space-y-4 md:space-y-0 w-full flex flex-col justify-center items-center md:flex-row md:space-x-4">
+                    <Input
                         type="text"
-                        placeholder="Enter topic (e.g., React Hooks, System Design, Leadership)"
-                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter topic (e.g., React Hooks, Node.js, Python)"
+                        className="w-full md:w-2/5 py-5"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                     />
 
-                    <select
-                        className="w-full p-2 border rounded-md"
+                    <Select
                         value={difficulty}
-                        onChange={(e) => setDifficulty(e.target.value)}
+                        onValueChange={(value) => setDifficulty(value)}
                     >
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
+                        <SelectTrigger className="w-full md:w-[180px] py-5">
+                            <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="beginner">Beginner</SelectItem>
+                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="advanced">Advanced</SelectItem>
+                        </SelectContent>
+                    </Select>
 
-                    <input
+                    <Input
                         type="number"
                         min="1"
                         max="10"
-                        className="w-full p-2 border rounded-md"
+                        className="w-full md:w-[100px] py-5"
+                        placeholder="Questions"
                         value={count}
                         onChange={(e) => setCount(Number(e.target.value))}
                     />
 
-                    <button
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    <ShinyButton
+                        className="w-full md:w-[180px] px-4 py-0.5 text-white  rounded-md hover:bg-gray-600 disabled:opacity-50"
                         onClick={() => generateQuestions.mutate()}
                         disabled={!topic || generateQuestions.isPending}
                     >
+                        <h2 className="font-semibold py-0.5">
                         {generateQuestions.isPending ? 'Generating...' : 'Generate Questions'}
-                    </button>
-
-                    {/* Generated Questions */}
-                    {response && (
-                        <div className="prose dark:prose-invert max-w-none mt-6">
-                            <ReactMarkdown>
-                                {response}
-                            </ReactMarkdown>
-                        </div>
-                    )}
+                        </h2>
+                    </ShinyButton>
                 </div>
+
+                {/* Generated Questions */}
+                {response && (
+                    <div className="mt-8 max-w-4xl mx-auto">
+                        <ReactMarkdown
+                            components={{
+                                h3: ({ children }) => (
+                                    <h3 className="text-xl text-white font-bold mt-8 mb-4 text-primary">{children}</h3>
+                                ),
+                                h4: ({ children }) => (
+                                    <h4 className="text-lg text-white font-semibold mt-4 mb-2">{children}</h4>
+                                ),
+                                p: ({ children }) => (
+                                    <p className="text-white my-2">{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                    <ul className="list-disc pl-6 space-y-2 my-4">{children}</ul>
+                                ),
+                                li: ({ children }) => (
+                                    <li className="text-white">{children}</li>
+                                ),
+                                em: ({ children }) => (
+                                    <em className="block text-white my-2">{children}</em>
+                                ),
+                            }}
+                        >
+                            {response}
+                        </ReactMarkdown>
+                    </div>
+                )}
+                <Particles className="absolute inset-0"
+        quantity={100}
+        ease={80}
+        color={color}
+        refresh />
             </div>
-        </MagicCard>
+            
+       
     );
 }
