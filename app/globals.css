@@ -41,6 +41,11 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --color-1: 0 100% 63%;
+    --color-2: 270 100% 63%;
+    --color-3: 210 100% 63%;
+    --color-4: 195 100% 63%;
+    --color-5: 90 100% 63%;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -75,6 +80,11 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --color-1: 0 100% 63%;
+    --color-2: 270 100% 63%;
+    --color-3: 210 100% 63%;
+    --color-4: 195 100% 63%;
+    --color-5: 90 100% 63%;
   }
 }
 
@@ -85,4 +95,17 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% center }
+  100% { background-position: -200% center }
+}
+
+.animate-gradient {
+  animation: gradient 3s linear infinite;
+}
+
+.bg-300\% {
+  background-size: 300% 100%;
 }

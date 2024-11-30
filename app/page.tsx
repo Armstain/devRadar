@@ -1,87 +1,73 @@
-import { GitHubLoginButton } from "@/components/github-login-button";
-import { ModeToggle } from "@/components/ModeToggle";
-import BlurFade from "@/components/ui/blur-fade";
-import { Button } from "@/components/ui/button";
-import { MagicCard } from "@/components/ui/magic-card";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { motion } from "framer-motion";
+import { WavyBackground } from "@/components/ui/wavy-background";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import ShimmerButton from "@/components/ui/shimmer-button";
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+export default function LandingPage() {
+  const router = useRouter();
+  const { isLoaded, userId } = useAuth();
+  const [greeting, setGreeting] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) setGreeting("Good Morning");
+    else if (hour >= 12 && hour < 17) setGreeting("Good Afternoon");
+    else if (hour >= 17 && hour < 22) setGreeting("Good Evening");
+    else setGreeting("Good Night");
+
+    if (isLoaded && userId) {
+      router.push("/dashboard");
+    }
+  }, [isLoaded, userId, router]);
+
+  if (!isLoaded) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <LoadingSpinner size="lg" />
+          <p className="text-lg text-muted-foreground animate-pulse">
+            Loading your experience...
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+  
+
   return (
-    <div className="p-6 space-y-6">
-      
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Developer Dashboard</h1>
-        <ModeToggle />
-      </div>
+    <WavyBackground className="h-screen" waveOpacity={0.3}>
+    <div className="h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center space-y-6"
+      >
+        <h1 className="text-4xl tracking-widest md:text-6xl uppercase font-bold text-foreground">
+          {greeting}!
+        </h1>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-       <BlurFade delay={0.25} inView>
-       <MagicCard className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Active Applications</p>
-            <p className="text-2xl font-bold">12</p>
-            <p className="text-xs text-muted-foreground">+3 this week</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade delay={0.5} inView>
-          <MagicCard className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Interview Pipeline</p>
-            <p className="text-2xl font-bold">4</p>
-            <p className="text-xs text-muted-foreground">2 upcoming</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade delay={0.75} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">GitHub Activity</p>
-            <p className="text-2xl font-bold">156</p>
-            <p className="text-xs text-muted-foreground">commits this month</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade delay={1} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Network Growth</p>
-            <p className="text-2xl font-bold">89</p>
-            <p className="text-xs text-muted-foreground">+12 new connections</p>
-          </div>
-          </MagicCard>
-        </BlurFade>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <MagicCard className="col-span-4">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Application Progress</h2>
-            {/* We'll add a chart component here */}
-          </div>
-        </MagicCard>
-        <MagicCard className="col-span-3">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Applications</h2>
-            {/* We'll add a list of recent applications */}
-          </div>
-        </MagicCard>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <MagicCard>
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">GitHub Activity</h2>
-            {/* We'll add GitHub activity feed */}
-          </div>
-        </MagicCard>
-        <MagicCard>
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Network Insights</h2>
-            {/* We'll add networking metrics and alerts */}
-          </div>
-        </MagicCard>
-      </div>
-      <GitHubLoginButton />
+        <TextGenerateEffect className=" text-muted-foreground max-w-md text-white mx-auto" duration={4} filter={true} words="Welcome to DevRadar, your personal development journey tracker." />
+        
+        <div className="flex gap-4 justify-center mt-8">
+          <RainbowButton className=" font-semibold" onClick={() => router.push("/sign-up")}>Get Started</RainbowButton>
+          <ShimmerButton className=" font-semibold" onClick={() => router.push("/sign-in")}>Sign In</ShimmerButton>
+        </div>
+      </motion.div>
     </div>
+    </WavyBackground>
   );
-}
+} 

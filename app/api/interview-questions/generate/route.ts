@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: Request) {
     try {
-        const { topic, difficulty, count = 5 } = await request.json();
+        const { topic, difficulty, count = 5, interviewType, companyStyle } = await request.json();
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
         const prompt = `Generate ${count} ${difficulty} level interview questions about ${topic}.
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         Format the response in markdown with clear headings and bullet points.`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
+        const response = result.response;
 
         return NextResponse.json(response.text());
 
