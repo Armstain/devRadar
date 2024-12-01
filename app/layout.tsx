@@ -7,7 +7,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from 'react-hot-toast';
 import QueryProvider from "./providers/query-client-provider";
-import { Manrope, DM_Sans, Space_Mono } from 'next/font/google'
+import { Manrope, Space_Mono } from 'next/font/google'
 
 
 const manrope = Manrope({ 
@@ -16,10 +16,7 @@ const manrope = Manrope({
 })
 
 // Secondary font for body text
-const dmSans = DM_Sans({ 
-  subsets: ['latin'],
-  variable: '--font-dm-sans',
-})
+
 
 // Monospace font for code snippets
 const spaceMono = Space_Mono({
@@ -50,7 +47,7 @@ export default function RootLayout({
     >
       <html suppressHydrationWarning lang="en">
         <body
-          className={`${manrope.variable} ${dmSans.variable} ${spaceMono.variable} antialiased`}
+          className={`${manrope.variable}  ${spaceMono.variable} antialiased`}
         >
           <ThemeProvider
             attribute="class"

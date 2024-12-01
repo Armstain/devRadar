@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  AreaChart,
-  Area,
+ 
+ 
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,10 +9,10 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend,
+  
   Cell,
-  Pie,
-  PieChart
+
+ 
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import BlurFade from '@/components/ui/blur-fade';

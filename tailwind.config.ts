@@ -12,7 +12,6 @@ export default {
 		extend: {
 			fontFamily: {
 				manrope: ['var(--font-manrope)'],
-				dmSans: ['var(--font-dm-sans)'],
 				spaceMono: ['var(--font-space-mono)'],
 			},
 			colors: {

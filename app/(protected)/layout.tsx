@@ -26,9 +26,7 @@ export default function ProtectedLayout({
         <SignedOut>
           <div className="flex h-full items-center justify-center">
             <SignInButton mode="modal">
-              <Button size="lg">
-                Sign In
-              </Button>
+              
             </SignInButton>
           </div>
         </SignedOut>

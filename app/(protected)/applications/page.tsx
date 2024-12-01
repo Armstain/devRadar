@@ -2,7 +2,6 @@
 "use client";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import BlurFade from "@/components/ui/blur-fade";
-import { Button } from "@/components/ui/button";
 import { MagicCard } from "@/components/ui/magic-card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";

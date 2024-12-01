@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { getCollection } from "@/lib/db";
 
-export async function GET(request: Request) {
+export async function GET() {
     try {
         const user = await currentUser();
         if (!user) {
