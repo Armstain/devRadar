@@ -3,7 +3,6 @@
 import { UserButton } from "@clerk/nextjs";
 import { Sidebar } from "@/components/ui/sidebar";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
 import { SignInButton } from "@clerk/nextjs";
 
 export default function ProtectedLayout({
