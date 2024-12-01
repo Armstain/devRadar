@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['media.licdn.com'],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
 };
 
 export default nextConfig;

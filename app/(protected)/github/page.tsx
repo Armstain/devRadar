@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { GitHubLoginButton } from "@/components/github-login-button";
 import Link from 'next/link';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import NumberTicker from '@/components/ui/number-ticker';
 
 export default function GitHubActivityPage() {
   const router = useRouter();
@@ -103,7 +105,7 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
   }
 
   if (isLoading || isGitHubConnected === null) {
-    return <div className="p-6">Loading...</div>;
+    return <LoadingSpinner className="h-screen flex justify-center items-center" />;
   }
 
   return (
@@ -112,12 +114,14 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
         <h1 className="text-3xl font-bold">GitHub Activity</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <BlurFade delay={0.25} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Public Repos</p>
-              <p className="text-2xl font-bold">{githubData?.publicRepos || 0}</p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.publicRepos || 0} />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -126,7 +130,9 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Followers</p>
-              <p className="text-2xl font-bold">{githubData?.user?.followers || 0}</p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.user?.followers || 0} />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -135,7 +141,9 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Following</p>
-              <p className="text-2xl font-bold">{githubData?.user?.following || 0}</p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.user?.following || 0} />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -144,11 +152,13 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Stars Received</p>
-              <p className="text-2xl font-bold">
-                {githubData?.topRepos?.length > 0 
-                  ? githubData?.topRepos.reduce((acc: number, repo: any) => acc + repo.stars, 0) 
-                  : 'no b-stars?'}
-              </p>
+              <div className="text-2xl font-bold">
+                <p>
+                  {githubData?.topRepos?.length > 0 
+                    ? githubData?.topRepos.reduce((acc: number, repo: any) => acc + repo.stars, 0)
+                    : 'no b-stars?'}
+                </p>
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -157,7 +167,9 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Total Commits</p>
-              <p className="text-2xl font-bold">{githubData?.totalCommits || 0}</p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.totalCommits || 0} />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -166,9 +178,9 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Current Streak</p>
-              <p className="text-2xl font-bold">
-                {githubData?.contributions?.currentStreak || 0} days
-              </p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.contributions?.currentStreak || 0} /> days
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -177,9 +189,9 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Total Contributions</p>
-              <p className="text-2xl font-bold">
-                {githubData?.contributions?.totalContributions || 0}
-              </p>
+              <div className="text-2xl font-bold">
+                <NumberTicker value={githubData?.contributions?.totalContributions || 0} />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
@@ -188,15 +200,18 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           <MagicCard className="p-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Average Per Day</p>
-              <p className="text-2xl font-bold">
-                {githubData?.contributions?.averagePerDay || 0}
-              </p>
+              <div className="text-2xl font-bold">
+                <NumberTicker 
+                  value={githubData?.contributions?.averagePerDay || 0}
+                  
+                />
+              </div>
             </div>
           </MagicCard>
         </BlurFade>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         
 
           
@@ -296,11 +311,8 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
         </MagicCard>
 
         
-        
-
-        
-      </div>
-      <MagicCard className="col-span-full">
+        <div> 
+        <MagicCard className="">
         <div className="p-6 w-full">
           <h2 className="text-xl font-semibold mb-4">Most Used Languages</h2>
           <div className="space-y-4 w-full">
@@ -321,6 +333,11 @@ const mostActiveCommits = githubData?.commitCounts?.sort((a: any, b: any) => b.c
           </div>
         </div>
       </MagicCard>
+        </div>
+
+        
+      </div>
+      
     </div>
   );
 }

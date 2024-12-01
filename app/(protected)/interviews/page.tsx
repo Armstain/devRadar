@@ -57,11 +57,11 @@ export default function AIQuestionGenerator() {
             <div className="p-6 w-full">
                 <h2 className="text-xl font-semibold mb-4 text-white text-center">AI Question Generator</h2>
                 
-                <div className="space-y-4 md:space-y-0 w-full flex flex-col justify-center items-center md:flex-row md:space-x-4">
+                <div className="space-y-4 md:space-y-0 w-full flex flex-col md:flex-row justify-center items-center md:space-x-4">
                     <Input
                         type="text"
                         placeholder="Enter topic (e.g., React Hooks, Node.js, Python)"
-                        className="w-full md:w-2/5 py-5"
+                        className="w-full md:w-2/5"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                     />
@@ -70,7 +70,7 @@ export default function AIQuestionGenerator() {
                         value={difficulty}
                         onValueChange={(value) => setDifficulty(value)}
                     >
-                        <SelectTrigger className="w-full md:w-[180px] py-5">
+                        <SelectTrigger className="w-full md:w-[180px]">
                             <SelectValue placeholder="Select difficulty" />
                         </SelectTrigger>
                         <SelectContent>
@@ -84,14 +84,14 @@ export default function AIQuestionGenerator() {
                         type="number"
                         min="1"
                         max="10"
-                        className="w-full md:w-[100px] py-5"
+                        className="w-full md:w-[100px]"
                         placeholder="Questions"
                         value={count}
                         onChange={(e) => setCount(Number(e.target.value))}
                     />
 
                     <ShinyButton
-                        className="w-full md:w-[180px] px-4 py-0.5 text-white  rounded-md hover:bg-gray-600 disabled:opacity-50"
+                        className="w-full md:w-[180px]"
                         onClick={() => generateQuestions.mutate()}
                         disabled={!topic || generateQuestions.isPending}
                     >
@@ -103,7 +103,7 @@ export default function AIQuestionGenerator() {
 
                 {/* Generated Questions */}
                 {response && (
-                    <div className="mt-8 max-w-4xl mx-auto">
+                    <div className="mt-8 max-w-4xl mx-auto px-4">
                         <ReactMarkdown
                             components={{
                                 h3: ({ children }) => (

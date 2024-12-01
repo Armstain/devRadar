@@ -9,6 +9,7 @@ import { LinkedInLoginButton } from "@/components/linkedin-login-button";
 import { Briefcase, Github, LinkedinIcon, Users } from "lucide-react";
 import DashboardCharts from "@/components/dashboard-charts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import NumberTicker from "@/components/ui/number-ticker";
 
 interface DashboardStats {
   applications: {
@@ -23,6 +24,15 @@ interface DashboardStats {
     publicRepos?: number;
     followers?: number;
     following?: number;
+    languages?: Array<{
+      language: string;
+      percentage: number;
+    }>;
+    contributions?: {
+      currentStreak: number;
+      totalContributions: number;
+      averagePerDay: number;
+    };
   };
   linkedin?: {
     connected: boolean;
@@ -40,8 +50,25 @@ export default function DashboardPage() {
 
   const { data: githubData, isLoading: isLoadingGithub } = useQuery({
     queryKey: ['github-user'],
-    queryFn: () => axios.get('/api/github/user').then(res => res.data),
-    retry: false, // Don't retry if GitHub is not connected
+    queryFn: async () => {
+      try {
+        const [userResponse, languagesResponse, contributionsResponse] = await Promise.all([
+          axios.get('/api/github/user'),
+          axios.get('/api/github/languages'),
+          axios.get('/api/github/contributions'),
+        ]);
+
+        return {
+          ...userResponse.data,
+          languages: languagesResponse.data.languages,
+          contributions: contributionsResponse.data,
+        };
+      } catch (error) {
+        console.error('GitHub data fetch error:', error);
+        return null;
+      }
+    },
+    retry: false,
   });
 
   const { data: linkedinData, isLoading: isLoadingLinkedin } = useQuery({
@@ -73,6 +100,12 @@ export default function DashboardPage() {
       publicRepos: githubData.public_repos,
       followers: githubData.followers,
       following: githubData.following,
+      languages: githubData.languages || [],
+      contributions: {
+        currentStreak: githubData.contributions?.currentStreak || 0,
+        totalContributions: githubData.contributions?.totalContributions || 0,
+        averagePerDay: githubData.contributions?.averagePerDay || 0
+      }
     } : { connected: false },
     linkedin: linkedinData ? {
       connected: true,
@@ -86,18 +119,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8 p-4 sm:p-8">
       <h1 className="text-3xl font-bold">Dashboard Overview</h1>
 
       {/* Application Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <BlurFade delay={0.1}>
           <MagicCard className="p-6">
             <div className="flex items-center gap-4">
               <Briefcase className="h-8 w-8 text-blue-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Applications</p>
-                <p className="text-2xl font-bold">{stats?.applications.total || 0}</p>
+                <div className="text-2xl font-bold">
+                  <NumberTicker value={stats?.applications.total || 0} />
+                </div>
               </div>
             </div>
           </MagicCard>
@@ -109,7 +144,9 @@ export default function DashboardPage() {
               <Users className="h-8 w-8 text-yellow-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Applied</p>
-                <p className="text-2xl font-bold">{stats?.applications.applied || 0}</p>
+                <div className="text-2xl font-bold">
+                  <NumberTicker value={stats?.applications.applied || 0} />
+                </div>
               </div>
             </div>
           </MagicCard>
@@ -120,7 +157,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4">
               <Users className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Interviewing</p>
+                <p className="text-sm text-muted-foreground">In Progress</p>
                 <p className="text-2xl font-bold">{stats?.applications.interviewing || 0}</p>
               </div>
             </div>
@@ -144,7 +181,7 @@ export default function DashboardPage() {
       <DashboardCharts stats={stats} />
 
       {/* Integrations Status */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <BlurFade delay={0.5}>
           <MagicCard className="p-6">
             <h2 className="text-xl font-semibold mb-4">GitHub Integration</h2>
@@ -186,16 +223,6 @@ export default function DashboardPage() {
                   <LinkedinIcon className="h-8 w-8" />
                   <div>
                     <p className="text-sm text-green-500">Connected</p>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Connections</p>
-                        <p className="text-xl font-bold">{stats.linkedin.connections}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Posts</p>
-                        <p className="text-xl font-bold">{stats.linkedin.posts}</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

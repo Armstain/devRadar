@@ -65,7 +65,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Status Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <BlurFade delay={0.25} inView>
           <MagicCard className="p-4">
             <div className="space-y-2">
@@ -102,10 +102,10 @@ export default function ApplicationsPage() {
 
       {/* Applications Table */}
       <MagicCard>
-        <div className="p-6 space-y-6 space-x-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
             <h2 className="text-xl font-semibold">All Applications</h2>
-            <div className="flex gap-2">
+            <div className="mt-2 sm:mt-0">
               Total Applications: {applications?.length || 0}
             </div>
           </div>

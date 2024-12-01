@@ -9,129 +9,211 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend
+  Legend,
+  Cell,
+  Pie,
+  PieChart
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import BlurFade from '@/components/ui/blur-fade';
 
 const DashboardCharts = ({ stats }) => {
-  // Transform application stats to show pipeline progress
-  // const pipelineData = [
-  //   {
-  //     name: 'Applications Pipeline',
-  //     "Total Submitted": stats?.applications.total || 0,
-  //     "In Process": (stats?.applications.applied || 0) + (stats?.applications.interviewing || 0),
-  //     "Interviewing": stats?.applications.interviewing || 0,
-  //     "Offers": stats?.applications.offered || 0,
-  //   }
-  // ];
-  const pipelineData = [
+  // Transform application stats for the bar chart
+  const statusData = [
     {
-      name: 'Applications Pipeline',
-      "Total Submitted": 50,
-      "In Process": 54,
-      "Interviewing": 5,
-      "Offers": 10,
-    }
+      name: "Total Submitted",
+      value: stats?.applications.total || 0,
+      color: "#94a3b8"
+    },
+    {
+      name: "In Process",
+      value: stats?.applications.applied || 0,
+      color: "#93c5fd"
+    },
+    {
+      name: "In Progress",
+      value: stats?.applications.interviewing || 0,
+      color: "#86efac"
+    },
+    {
+      name: "Offers",
+      value: stats?.applications.offered || 0,
+      color: "#fde047"
+    },
+    
   ];
 
-  // GitHub activity data
-  const githubData = [
-    {
-      name: 'GitHub Activity',
-      Repositories: stats?.github?.publicRepos || 0,
-      "Community Size": (stats?.github?.followers || 0) + (stats?.github?.following || 0),
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 rounded-lg shadow-lg border">
+          <p className="font-medium">{label}</p>
+          <p className="text-sm text-gray-600">
+            Count: {payload[0].value}
+          </p>
+        </div>
+      );
     }
-  ];
+    return null;
+  };
+
+  // GitHub activity data
+  // const languagesData = stats?.github?.languages?.map((lang: any) => ({
+  //   name: lang.language,
+  //   value: lang.percentage
+  // })).slice(0, 5) || []; // Top 5 languages
+
+  const currentStreak = stats?.github?.contributions?.currentStreak || 0;
+  const averagePerDay = stats?.github?.contributions?.averagePerDay || 0;
+  
+  // const languageColors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+  // Celebration messages for streak milestones
+  const getStreakMessage = (streak: number) => {
+    if (streak >= 100) return "Legendary streak! 🏆";
+    if (streak >= 50) return "Unstoppable! 🚀";
+    if (streak >= 30) return "You're on fire! 🔥";
+    return `${30 - streak} days to reach 30`;
+  };
+
+
+  // Celebration messages for commit averages
+  const getCommitMessage = (avg: number) => {
+    if (avg >= 10) return "Code master! 👑";
+    if (avg >= 7) return "Crushing it! 💪";
+    if (avg >= 5) return "Excellent pace! ⭐";
+    return "Aim for 5 commits/day";
+  };
 
   return (
     <div className="space-y-6">
+      {/* Application Pipeline chart */}
       <BlurFade delay={0.7}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Application Progress</CardTitle>
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold">Application Pipeline</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Current status distribution</p>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={pipelineData}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
+                <BarChart
+                  data={statusData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                  barSize={40}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="Total Submitted" 
-                    stackId="1" 
-                    fill="#94a3b8" 
-                    stroke="#64748b"
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                  <XAxis 
+                    dataKey="name"
+                    fontSize={12}
+                    tickLine={false}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="In Process" 
-                    stackId="2" 
-                    fill="#93c5fd" 
-                    stroke="#3b82f6"
+                  <YAxis
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="Interviewing" 
-                    stackId="3" 
-                    fill="#86efac" 
-                    stroke="#22c55e"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="Offers" 
-                    stackId="4" 
-                    fill="#fde047" 
-                    stroke="#eab308"
-                  />
-                </AreaChart>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="value"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
+            </div>
+            
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {statusData.map((status, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: status.color }}
+                  />
+                  <span className="text-muted-foreground">{status.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </BlurFade>
 
+      {/* GitHub Stats */}
       <BlurFade delay={0.8}>
-        <Card>
-          <CardHeader>
-            <CardTitle>GitHub Presence</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={githubData}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Repositories" fill="#3b82f6" />
-                  <Bar dataKey="Community Size" fill="#22c55e" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Current Streak Card */}
+          <Card className={`hover:shadow-lg transition-all duration-300 ${
+            currentStreak >= 30 
+              ? 'bg-gradient-to-br from-amber-500 to-orange-600 animate-pulse'
+              : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+          }`}>
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="text-white mb-2">
+                <span className="text-5xl font-bold">{currentStreak}</span>
+                <span className="text-xl ml-2">days</span>
+                {currentStreak >= 30 && <span className="ml-2 text-2xl">🏆</span>}
+              </div>
+              <p className="text-white/80 text-sm font-medium">
+                Current Streak {currentStreak >= 30 ? '🔥🔥🔥' : '🔥'}
+              </p>
+              <div className="mt-4 w-full bg-white/20 h-1.5 rounded-full">
+                <div 
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    currentStreak >= 30 ? 'bg-amber-300 animate-pulse' : 'bg-white'
+                  }`}
+                  style={{ width: `${Math.min((currentStreak / 30) * 100, 100)}%` }}
+                />
+              </div>
+              <p className={`text-xs mt-2 ${
+                currentStreak >= 30 ? 'text-amber-100' : 'text-white/60'
+              }`}>
+                {getStreakMessage(currentStreak)}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Average Commits Card */}
+          <Card className={`hover:shadow-lg transition-all duration-300 ${
+            averagePerDay >= 5 
+              ? 'bg-gradient-to-br from-emerald-500 to-teal-600 animate-pulse'
+              : 'bg-gradient-to-br from-green-500 to-emerald-600'
+          }`}>
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="text-white mb-2">
+                <span className="text-5xl font-bold">{averagePerDay}</span>
+                {averagePerDay >= 5 && <span className="ml-2 text-2xl">⭐</span>}
+              </div>
+              <p className="text-white/80 text-sm font-medium">
+                Avg Commits/Day {averagePerDay >= 5 ? '📈📈📈' : '📈'}
+              </p>
+              <div className="mt-4 w-full bg-white/20 h-1.5 rounded-full">
+                <div 
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    averagePerDay >= 5 ? 'bg-emerald-300 animate-pulse' : 'bg-white'
+                  }`}
+                  style={{ width: `${Math.min((averagePerDay / 5) * 100, 100)}%` }}
+                />
+              </div>
+              <p className={`text-xs mt-2 ${
+                averagePerDay >= 5 ? 'text-emerald-100' : 'text-white/60'
+              }`}>
+                {getCommitMessage(averagePerDay)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </BlurFade>
     </div>
   );

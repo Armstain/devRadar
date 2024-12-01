@@ -58,10 +58,10 @@ export default function LandingPage() {
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 1 }}
         className="text-center space-y-6"
       >
-        <h1 className="text-4xl tracking-widest md:text-6xl uppercase font-bold text-foreground">
+        <h1 className="text-5xl font-manrope tracking-widest md:text-6xl uppercase font-bold text-foreground">
           {greeting}!
         </h1>
 
@@ -84,6 +84,18 @@ export default function LandingPage() {
             {isLoading ? "Please wait..." : "Sign In"}
           </ShimmerButton>
         </div>
+      </motion.div>
+
+      {/* Credits Section */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 0.5 }}
+        className="absolute bottom-4 text-center text-sm text-muted-foreground"
+      >
+        <p>
+          Made with ❤️ by <a href="https://github.com/armstain" className="text-primary font-semibold">Adnan</a>
+        </p>
       </motion.div>
     </div>
     </WavyBackground>

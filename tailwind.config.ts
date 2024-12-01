@@ -10,6 +10,11 @@ export default {
 	],
 	theme: {
 		extend: {
+			fontFamily: {
+				manrope: ['var(--font-manrope)'],
+				dmSans: ['var(--font-dm-sans)'],
+				spaceMono: ['var(--font-space-mono)'],
+			},
 			colors: {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
@@ -83,6 +88,7 @@ export default {
 				'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear',
 				gradient: 'gradient 8s linear infinite',
 				'spin-slow': 'spinning 1.7s linear infinite',
+				'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear'
 			},
 			keyframes: {
 				'accordion-down': {
@@ -166,9 +172,14 @@ export default {
 				},
 				spinning: {
 					to: {
-						transform: 'rotate(360deg)',
-					},
+						transform: 'rotate(360deg)'
+					}
 				},
+				'border-beam': {
+					'100%': {
+						'offset-distance': '100%'
+					}
+				}
 			}
 		}
 	},
