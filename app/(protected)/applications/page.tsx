@@ -6,6 +6,7 @@ import { MagicCard } from "@/components/ui/magic-card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ApplicationsTable } from "@/components/applications/applications-table"
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface Application {
   id: string;
@@ -56,6 +57,10 @@ export default function ApplicationsPage() {
     return acc;
   }, {} as Record<string, number>) || {};
 
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -100,7 +105,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Applications Table */}
-      <MagicCard>
+      <div>
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-x-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
             <h2 className="text-xl font-semibold">All Applications</h2>
@@ -115,7 +120,7 @@ export default function ApplicationsPage() {
             onDelete={handleDelete}
           />
         </div>
-      </MagicCard>
+      </div>
     </div>
   );
 }

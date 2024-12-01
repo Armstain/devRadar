@@ -9,6 +9,7 @@ import axios from "axios";
 import { LinkedInLoginButton } from "@/components/linkedin-login-button";
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function LinkedInActivityPage() {
   const [isLinkedInConnected, setIsLinkedInConnected] = useState<boolean | null>(null);
@@ -57,8 +58,8 @@ export default function LinkedInActivityPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="flex justify-center items-center h-screen">
+        <LoadingSpinner />
       </div>
     );
   }

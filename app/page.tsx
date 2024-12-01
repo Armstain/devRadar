@@ -65,7 +65,7 @@ export default function LandingPage() {
           {greeting}!
         </h1>
 
-        <TextGenerateEffect className=" text-muted-foreground max-w-md text-white mx-auto" duration={4} filter={true} words="Welcome to DevRadar, your personal development journey tracker." />
+        <TextGenerateEffect className=" text-muted-foreground max-w-md text-white mx-auto" duration={3} filter={true} words="Welcome to DevRadar, your personal development journey tracker." />
         
         <div className="flex gap-4 justify-center mt-8">
           <RainbowButton 
