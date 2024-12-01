@@ -58,14 +58,20 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
 
   const onSubmit = async (data: ApplicationFormValues) => {
     try {
+      console.log('Submitting data:', data);
       const response = application
         ? await axios.patch('/api/applications', { id: application.id, ...data })
         : await axios.post('/api/applications', data);
-        console.log(response);
       
+      console.log('Response:', response.data);
+
       if (response.status === 200) {
-        // Invalidate and refetch applications
-        await queryClient.invalidateQueries({ queryKey: ['applications'] });
+        console.log('Invalidating queries...');
+        await queryClient.invalidateQueries({ 
+          queryKey: ['applications'],
+          exact: true,
+          refetchType: 'all'
+        });
         
         const statusMessages = {
           'applied': '🚀 Application submitted successfully!',

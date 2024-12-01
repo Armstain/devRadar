@@ -8,6 +8,7 @@ import { GitHubLoginButton } from "@/components/github-login-button";
 import { LinkedInLoginButton } from "@/components/linkedin-login-button";
 import { Briefcase, Github, LinkedinIcon, Users } from "lucide-react";
 import DashboardCharts from "@/components/dashboard-charts";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DashboardStats {
   applications: {
@@ -31,41 +32,57 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  // Fetch dashboard stats
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      const [applications, github, linkedin] = await Promise.all([
-        axios.get('/api/applications').then(res => res.data),
-        axios.get('/api/github/user').catch(() => null),
-        axios.get('/api/linkedin/user').catch(() => null),
-      ]);
-
-      return {
-        applications: {
-          total: applications.length,
-          applied: applications.filter(app => app.status === 'applied').length,
-          interviewing: applications.filter(app => app.status === 'interviewing').length,
-          offered: applications.filter(app => app.status === 'offered').length,
-          rejected: applications.filter(app => app.status === 'rejected').length,
-        },
-        github: github ? {
-          connected: true,
-          publicRepos: github.data.public_repos,
-          followers: github.data.followers,
-          following: github.data.following,
-        } : { connected: false },
-        linkedin: linkedin ? {
-          connected: true,
-          connections: linkedin.data.numConnections,
-          posts: linkedin.data.numPosts,
-        } : { connected: false },
-      };
-    },
+  
+  const { data: applications, isLoading: isLoadingApps } = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => axios.get('/api/applications').then(res => res.data),
   });
 
+  const { data: githubData, isLoading: isLoadingGithub } = useQuery({
+    queryKey: ['github-user'],
+    queryFn: () => axios.get('/api/github/user').then(res => res.data),
+    retry: false, // Don't retry if GitHub is not connected
+  });
+
+  const { data: linkedinData, isLoading: isLoadingLinkedin } = useQuery({
+    queryKey: ['linkedin-user'],
+    queryFn: () => axios.get('/api/linkedin/user').then(res => res.data),
+    retry: false, // Don't retry if LinkedIn is not connected
+  });
+
+  // Combine loading states
+  const isLoading = isLoadingApps || isLoadingGithub || isLoadingLinkedin;
+
+  // Transform data for stats
+  const stats: DashboardStats = {
+    applications: applications ? {
+      total: applications.length,
+      applied: applications.filter(app => app.status === 'applied').length,
+      interviewing: applications.filter(app => app.status === 'interviewing').length,
+      offered: applications.filter(app => app.status === 'offered').length,
+      rejected: applications.filter(app => app.status === 'rejected').length,
+    } : {
+      total: 0,
+      applied: 0,
+      interviewing: 0,
+      offered: 0,
+      rejected: 0,
+    },
+    github: githubData ? {
+      connected: true,
+      publicRepos: githubData.public_repos,
+      followers: githubData.followers,
+      following: githubData.following,
+    } : { connected: false },
+    linkedin: linkedinData ? {
+      connected: true,
+      connections: linkedinData.numConnections,
+      posts: linkedinData.numPosts,
+    } : { connected: false },
+  };
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner className="h-screen flex justify-center items-center" />;
   }
 
   return (

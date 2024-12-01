@@ -9,8 +9,6 @@ import {
 } from '@clerk/nextjs'
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import Sidebar from "@/components/sidebar";
-import { Button } from "@/components/ui/button";
 import { Toaster } from 'react-hot-toast';
 import QueryProvider from "./providers/query-client-provider";
 

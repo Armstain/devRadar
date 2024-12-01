@@ -14,7 +14,7 @@ export default function LandingPage() {
   const router = useRouter();
   const { isLoaded, userId } = useAuth();
   const [greeting, setGreeting] = useState("");
-//   const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -27,6 +27,11 @@ export default function LandingPage() {
       router.push("/dashboard");
     }
   }, [isLoaded, userId, router]);
+
+  const handleNavigation = async (path: string) => {
+    setIsLoading(true);
+    router.push(path);
+  };
 
   if (!isLoaded) {
     return (
@@ -63,8 +68,21 @@ export default function LandingPage() {
         <TextGenerateEffect className=" text-muted-foreground max-w-md text-white mx-auto" duration={4} filter={true} words="Welcome to DevRadar, your personal development journey tracker." />
         
         <div className="flex gap-4 justify-center mt-8">
-          <RainbowButton className=" font-semibold" onClick={() => router.push("/sign-up")}>Get Started</RainbowButton>
-          <ShimmerButton className=" font-semibold" onClick={() => router.push("/sign-in")}>Sign In</ShimmerButton>
+          <RainbowButton 
+            className="font-semibold" 
+            onClick={() => handleNavigation("/sign-up")}
+            disabled={isLoading}
+          >
+            {isLoading ? "Please wait..." : "Get Started"}
+          </RainbowButton>
+          
+          <ShimmerButton 
+            className="font-semibold" 
+            onClick={() => handleNavigation("/sign-in")}
+            disabled={isLoading}
+          >
+            {isLoading ? "Please wait..." : "Sign In"}
+          </ShimmerButton>
         </div>
       </motion.div>
     </div>

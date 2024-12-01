@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
-import { MagicCard } from "@/components/ui/magic-card";
 import { toast } from 'react-hot-toast';
-import { PlaceholdersAndVanishInput } from '@/components/placeholders-and-vanish-input';
 import {
   Select,
   SelectContent,
@@ -15,8 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import DotPattern from '@/components/ui/dot-pattern';
-import { cn } from '@/lib/utils';
+
 import Particles from '@/components/ui/particles';
 import { useTheme } from 'next-themes';
 import ShinyButton from '@/components/ui/shiny-button';

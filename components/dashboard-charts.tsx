@@ -16,13 +16,22 @@ import BlurFade from '@/components/ui/blur-fade';
 
 const DashboardCharts = ({ stats }) => {
   // Transform application stats to show pipeline progress
+  // const pipelineData = [
+  //   {
+  //     name: 'Applications Pipeline',
+  //     "Total Submitted": stats?.applications.total || 0,
+  //     "In Process": (stats?.applications.applied || 0) + (stats?.applications.interviewing || 0),
+  //     "Interviewing": stats?.applications.interviewing || 0,
+  //     "Offers": stats?.applications.offered || 0,
+  //   }
+  // ];
   const pipelineData = [
     {
       name: 'Applications Pipeline',
-      "Total Submitted": stats?.applications.total || 0,
-      "In Process": (stats?.applications.applied || 0) + (stats?.applications.interviewing || 0),
-      "Interviewing": stats?.applications.interviewing || 0,
-      "Offers": stats?.applications.offered || 0,
+      "Total Submitted": 50,
+      "In Process": 54,
+      "Interviewing": 5,
+      "Offers": 10,
     }
   ];
 
