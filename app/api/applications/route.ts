@@ -92,3 +92,26 @@ export async function PATCH(req: Request) {
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const body = await req.json();
+        const { id } = body;
+
+        const db = await getDb();
+        const result = await db.collection("applications").deleteOne({
+            _id: new ObjectId(id),
+            userId
+        });
+
+        return NextResponse.json({ success: result.deletedCount > 0 });
+    } catch (error) {
+        console.error("[APPLICATIONS_DELETE]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}

@@ -39,12 +39,22 @@ export default function ApplicationsPage() {
 
   const deleteApplication = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/applications/${id}`)
+      try {
+        const response = await axios.delete(`/api/applications/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error deleting application:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
     },
-  })
+    onError: (error) => {
+      console.error('Delete mutation failed:', error);
+      alert('Failed to delete application. Please try again.');
+    },
+  });
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this application?')) {
