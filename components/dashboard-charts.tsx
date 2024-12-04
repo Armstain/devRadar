@@ -26,7 +26,7 @@ const DashboardCharts = ({ stats }) => {
       color: "#94a3b8"
     },
     {
-      name: "In Process",
+      name: "Applied",
       value: stats?.applications.applied || 0,
       color: "#93c5fd"
     },
