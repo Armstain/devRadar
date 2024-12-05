@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ApplicationsTable } from "@/components/applications/applications-table"
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CSVImport } from "@/components/applications/csv-import"; 
+// import { CSVImport } from "@/components/applications/csv-import"; 
 
 interface Application {
   id: string;
@@ -77,7 +77,7 @@ export default function ApplicationsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Job Applications</h1>
         <div className="flex items-center gap-4">
-          <CSVImport />
+          {/* <CSVImport /> */}
           <ApplicationDialog />
         </div>
       </div>
