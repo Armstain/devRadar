@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input"
 import Particles from '@/components/ui/particles';
 import { useTheme } from 'next-themes';
 import ShinyButton from '@/components/ui/shiny-button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AIQuestionGenerator() {
     const [topic, setTopic] = useState('');
@@ -53,9 +52,7 @@ export default function AIQuestionGenerator() {
         }
     });
 
-    if (generateQuestions.isPending) {
-      return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>
-    }
+   
 
     return (
         
