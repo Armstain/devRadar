@@ -1,6 +1,6 @@
 # DevRadar
 
-DevRadar is a job application tracking platform built with Next.js, React, and MongoDB.
+DevRadar is a job application tracking platform built with Next.js, TypeScript React, and MongoDB.
 
 ## Table of Contents
 
