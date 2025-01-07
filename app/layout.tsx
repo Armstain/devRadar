@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from 'react-hot-toast';
 import QueryProvider from "./providers/query-client-provider";
 import { Manrope, Space_Mono } from 'next/font/google'
+import { cn } from "@/lib/utils";
 
 
 const manrope = Manrope({ 
@@ -45,13 +46,13 @@ export default function RootLayout({
         },
       }}
     >
-      <html suppressHydrationWarning lang="en">
+      <html suppressHydrationWarning lang="en" className="dark">
         <body
           className={`${manrope.variable}  ${spaceMono.variable} antialiased`}
         >
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >

@@ -115,22 +115,31 @@ export default function DashboardPage() {
   };
 
   if (isLoading) {
-    return <LoadingSpinner className="h-screen flex justify-center items-center" />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8">
+        <LoadingSpinner className="w-12 h-12" />
+        <p className="mt-4 text-lg text-muted-foreground animate-pulse">
+          Loading dashboard...
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8 p-4 sm:p-8">
-      <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+        Dashboard Overview
+      </h1>
 
       {/* Application Stats */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <BlurFade delay={0.1}>
           <MagicCard className="p-6">
             <div className="flex items-center gap-4">
-              <Briefcase className="h-8 w-8 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Applications</p>
-                <div className="text-2xl font-bold">
+              <Briefcase className="h-10 w-10 text-blue-500" />
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">Total Applications</p>
+                <div className="text-3xl font-bold">
                   <NumberTicker value={stats?.applications.total || 0} />
                 </div>
               </div>
@@ -141,10 +150,10 @@ export default function DashboardPage() {
         <BlurFade delay={0.2}>
           <MagicCard className="p-6">
             <div className="flex items-center gap-4">
-              <Users className="h-8 w-8 text-yellow-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Applied</p>
-                <div className="text-2xl font-bold">
+              <Users className="h-10 w-10 text-yellow-500" />
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">Applied</p>
+                <div className="text-3xl font-bold">
                   <NumberTicker value={stats?.applications.applied || 0} />
                 </div>
               </div>
@@ -155,10 +164,12 @@ export default function DashboardPage() {
         <BlurFade delay={0.3}>
           <MagicCard className="p-6">
             <div className="flex items-center gap-4">
-              <Users className="h-8 w-8 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-2xl font-bold">{stats?.applications.interviewing || 0}</p>
+              <Users className="h-10 w-10 text-green-500" />
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">In Progress</p>
+                <div className="text-3xl font-bold">
+                  {stats?.applications.interviewing || 0}
+                </div>
               </div>
             </div>
           </MagicCard>
@@ -167,10 +178,12 @@ export default function DashboardPage() {
         <BlurFade delay={0.4}>
           <MagicCard className="p-6">
             <div className="flex items-center gap-4">
-              <Users className="h-8 w-8 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Rejected</p>
-                <p className="text-2xl font-bold">{stats?.applications.rejected || 0}</p>
+              <Users className="h-10 w-10 text-red-500" />
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">Rejected</p>
+                <div className="text-3xl font-bold">
+                  {stats?.applications.rejected || 0}
+                </div>
               </div>
             </div>
           </MagicCard>
@@ -181,28 +194,30 @@ export default function DashboardPage() {
       <DashboardCharts stats={stats} />
 
       {/* Integrations Status */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         <BlurFade delay={0.5}>
           <MagicCard className="p-6">
-            <h2 className="text-xl font-semibold mb-4">GitHub Integration</h2>
+            <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              GitHub Integration
+            </h2>
             {stats?.github?.connected ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Github className="h-8 w-8" />
+                  <Github className="h-10 w-10" />
                   <div>
-                    <p className="text-sm text-green-500">Connected</p>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Repositories</p>
-                        <p className="text-xl font-bold">{stats.github.publicRepos}</p>
+                    <p className="text-sm text-green-500 font-medium">Connected</p>
+                    <div className="grid grid-cols-3 gap-6 mt-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground font-medium">Repositories</p>
+                        <p className="text-2xl font-bold">{stats.github.publicRepos}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Followers</p>
-                        <p className="text-xl font-bold">{stats.github.followers}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground font-medium">Followers</p>
+                        <p className="text-2xl font-bold">{stats.github.followers}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Following</p>
-                        <p className="text-xl font-bold">{stats.github.following}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground font-medium">Following</p>
+                        <p className="text-2xl font-bold">{stats.github.following}</p>
                       </div>
                     </div>
                   </div>
@@ -216,13 +231,15 @@ export default function DashboardPage() {
 
         <BlurFade delay={0.6}>
           <MagicCard className="p-6">
-            <h2 className="text-xl font-semibold mb-4">LinkedIn Integration</h2>
+            <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              LinkedIn Integration
+            </h2>
             {stats?.linkedin?.connected ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <LinkedinIcon className="h-8 w-8" />
+                  <LinkedinIcon className="h-10 w-10" />
                   <div>
-                    <p className="text-sm text-green-500">Connected</p>
+                    <p className="text-sm text-green-500 font-medium">Connected</p>
                   </div>
                 </div>
               </div>

@@ -69,13 +69,22 @@ export default function ApplicationsPage() {
   }, {} as Record<string, number>) || {};
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8">
+        <LoadingSpinner className="w-12 h-12" />
+        <p className="mt-4 text-lg text-muted-foreground animate-pulse">
+          Loading applications...
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Job Applications</h1>
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+          Job Applications
+        </h1>
         <div className="flex items-center gap-4">
           {/* <CSVImport /> */}
           <ApplicationDialog />
@@ -83,36 +92,36 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Status Overview Cards */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <BlurFade delay={0.25} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Applied</p>
-              <p className="text-2xl font-bold">{counts['applied'] || 0}</p>
+          <MagicCard className="p-6">
+            <div className="space-y-3">
+              <p className="text-base text-muted-foreground font-medium">Applied</p>
+              <p className="text-3xl font-bold">{counts['applied'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
         <BlurFade key="in-progress" delay={0.5} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">In Progress</p>
-              <p className="text-2xl font-bold">{counts['in-progress'] || 0}</p>
+          <MagicCard className="p-6">
+            <div className="space-y-3">
+              <p className="text-base text-muted-foreground font-medium">In Progress</p>
+              <p className="text-3xl font-bold">{counts['in-progress'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
         <BlurFade key="offer" delay={0.75} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Offer</p>
-              <p className="text-2xl font-bold">{counts['offer'] || 0}</p>
+          <MagicCard className="p-6">
+            <div className="space-y-3">
+              <p className="text-base text-muted-foreground font-medium">Offer</p>
+              <p className="text-3xl font-bold">{counts['offer'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
         <BlurFade key="rejected" delay={1} inView>
-          <MagicCard className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Rejected</p>
-              <p className="text-2xl font-bold">{counts['rejected'] || 0}</p>
+          <MagicCard className="p-6">
+            <div className="space-y-3">
+              <p className="text-base text-muted-foreground font-medium">Rejected</p>
+              <p className="text-3xl font-bold">{counts['rejected'] || 0}</p>
             </div>
           </MagicCard>
         </BlurFade>
@@ -120,10 +129,12 @@ export default function ApplicationsPage() {
 
       {/* Applications Table */}
       <div>
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-x-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-            <h2 className="text-xl font-semibold">All Applications</h2>
-            <div className="mt-2 sm:mt-0">
+        <div className="p-6 space-y-6 overflow-x-auto rounded-lg bg-card/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              All Applications
+            </h2>
+            <div className="mt-2 sm:mt-0 text-lg text-muted-foreground">
               Total Applications: {applications?.length || 0}
             </div>
           </div>

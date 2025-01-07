@@ -21,7 +21,7 @@ export default function LandingPage() {
     if (hour >= 5 && hour < 12) setGreeting("Good Morning");
     else if (hour >= 12 && hour < 17) setGreeting("Good Afternoon");
     else if (hour >= 17 && hour < 22) setGreeting("Good Evening");
-    else setGreeting("Good Night");
+    else setGreeting("Night Owl");
 
     if (isLoaded && userId) {
       router.push("/dashboard");
@@ -59,13 +59,18 @@ export default function LandingPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
-        className="text-center space-y-6"
+        className="text-center space-y-8"
       >
-        <h1 className="text-5xl font-manrope tracking-widest md:text-6xl uppercase font-bold text-foreground">
+        <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-400 to-white bg-clip-text text-transparent animate-gradient bg-300%">
           {greeting}!
         </h1>
 
-        <TextGenerateEffect className=" text-muted-foreground max-w-md text-white mx-auto" duration={3} filter={true} words="Welcome to DevRadar, your personal development journey tracker." />
+        <TextGenerateEffect 
+          className="text-xl md:text-2xl text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed" 
+          duration={3} 
+          filter={true} 
+          words="Welcome to DevRadar, your personal development journey tracker." 
+        />
         
         <div className="flex gap-4 justify-center mt-8">
           <RainbowButton 
@@ -94,7 +99,7 @@ export default function LandingPage() {
         className="absolute bottom-4 text-center text-sm text-muted-foreground"
       >
         <p>
-          Made with ❤️ by <a href="https://github.com/armstain" className="text-primary font-semibold">Adnan</a>
+          Made with ❤️ by <a href="https://github.com/armstain" className="text-foreground font-semibold">Adnan</a>
         </p>
       </motion.div>
     </div>
