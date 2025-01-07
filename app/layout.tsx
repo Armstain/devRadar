@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from 'react-hot-toast';
 import QueryProvider from "./providers/query-client-provider";
 import { Manrope, Space_Mono } from 'next/font/google'
-import { cn } from "@/lib/utils";
 
 
 const manrope = Manrope({ 
