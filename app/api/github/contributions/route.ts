@@ -1,34 +1,29 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { getGithubCredentials } from "@/lib/connections";
+import { githubFetch } from "@/lib/github";
 
 export async function GET() {
     try {
-        const user = await currentUser();
-        if (!user) {
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.githubToken || !userData?.githubUsername) {
+        const github = await getGithubCredentials(userId);
+        if (!github?.username) {
             return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
         }
 
         // Fetch user's events (includes commits, PRs, etc.)
-        const eventsResponse = await fetch(
-            `https://api.github.com/users/${userData.githubUsername}/events`,
-            {
-                headers: {
-                    Authorization: `Bearer ${userData.githubToken}`,
-                },
-            }
+        const eventsResponse = await githubFetch(
+            github.token,
+            `/users/${encodeURIComponent(github.username)}/events?per_page=100`
         );
-        const events = await eventsResponse.json();
+        const events: { type: string; created_at: string }[] = await eventsResponse.json();
 
         if (!Array.isArray(events)) {
-            return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
+            return NextResponse.json({ error: "Failed to fetch events" }, { status: 502 });
         }
 
         // Calculate contributions in the last 30 days
@@ -37,7 +32,7 @@ export async function GET() {
 
         let currentStreak = 0;
         let totalContributions = 0;
-        const contributionsByDay = new Map();
+        const contributionsByDay = new Map<string, number>();
 
         // Process events
         events.forEach(event => {
@@ -94,9 +89,6 @@ export async function GET() {
 
     } catch (error) {
         console.error("Contributions error:", error);
-        return NextResponse.json({
-            error: "Failed to fetch contribution statistics",
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch contribution statistics" }, { status: 500 });
     }
 } 

@@ -1,16 +1,10 @@
-export const GITHUB_CONFIG = {
-    CLIENT_ID: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
-    SCOPES: ['read:user', 'user:email', 'repo'].join(' '),
-    REDIRECT_URI: 'http://localhost:3000/api/auth/github/callback'
-};
+const GITHUB_API = "https://api.github.com";
 
-export function getGithubAuthUrl() {
-    const params = new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID!,
-        redirect_uri: 'http://localhost:3000/api/auth/github/callback',
-        scope: ['read:user', 'user:email', 'repo'].join(' '),
-        state: Math.random().toString(36).substring(7)
+export function githubFetch(token: string, path: string): Promise<Response> {
+    return fetch(`${GITHUB_API}${path}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+        },
     });
-
-    return `https://github.com/login/oauth/authorize?${params}`;
 }

@@ -1,37 +1,35 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { getCollection } from "@/lib/db";
+import { getLinkedinCredentials } from "@/lib/connections";
 
 export async function GET() {
     try {
-        // Get current user from Clerk
-        const user = await currentUser();
-        if (!user) {
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get user's LinkedIn token from our database
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.linkedinToken) {
+        const linkedin = await getLinkedinCredentials(userId);
+        if (!linkedin) {
             return NextResponse.json({ error: "LinkedIn not connected" }, { status: 400 });
         }
+        const collection = await getCollection('users');
 
         try {
             // Get user's basic profile using OpenID Connect
             const userInfoResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
                 headers: {
-                    'Authorization': `Bearer ${userData.linkedinToken}`,
+                    'Authorization': `Bearer ${linkedin.token}`,
                 },
             });
 
             if (!userInfoResponse.ok) {
-                console.error('LinkedIn userinfo error:', await userInfoResponse.text());
+                console.error('LinkedIn userinfo error:', userInfoResponse.status);
                 // If token is invalid, we should prompt user to reconnect
                 if (userInfoResponse.status === 401) {
                     await collection.updateOne(
-                        { userId: user.id },
+                        { userId },
                         { $unset: { linkedinToken: "", linkedinUserInfo: "" } }
                     );
                     return NextResponse.json({ error: "LinkedIn token expired" }, { status: 401 });
@@ -48,7 +46,7 @@ export async function GET() {
                     `https://api.linkedin.com/v2/ugcPosts?q=authors&authors[0]=urn:li:person:${userInfo.sub}`,
                     {
                         headers: {
-                            'Authorization': `Bearer ${userData.linkedinToken}`,
+                            'Authorization': `Bearer ${linkedin.token}`,
                             'X-Restli-Protocol-Version': '2.0.0',
                             'LinkedIn-Version': '202304',
                         },
@@ -57,7 +55,6 @@ export async function GET() {
 
                 if (postsResponse.ok) {
                     posts = await postsResponse.json();
-                    console.log('LinkedIn posts:', posts);
                 }
             } catch (error) {
                 console.error('Error fetching posts:', error);
@@ -79,7 +76,7 @@ export async function GET() {
 
             // Store the updated profile in our database
             await collection.updateOne(
-                { userId: user.id },
+                { userId },
                 {
                     $set: {
                         linkedinUserInfo: enrichedProfile,
@@ -92,17 +89,11 @@ export async function GET() {
 
         } catch (error) {
             console.error('LinkedIn API error:', error);
-            return NextResponse.json({
-                error: "Failed to fetch LinkedIn data",
-                details: error instanceof Error ? error.message : 'Unknown error'
-            }, { status: 500 });
+            return NextResponse.json({ error: "Failed to fetch LinkedIn data" }, { status: 500 });
         }
 
     } catch (error) {
         console.error("LinkedIn data fetch error:", error);
-        return NextResponse.json({
-            error: "Failed to fetch LinkedIn data",
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch LinkedIn data" }, { status: 500 });
     }
 }

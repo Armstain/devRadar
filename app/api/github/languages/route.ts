@@ -1,44 +1,37 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { getGithubCredentials } from "@/lib/connections";
+import { githubFetch } from "@/lib/github";
 
 export async function GET() {
     try {
-        const user = await currentUser();
-        if (!user) {
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.githubToken) {
+        const github = await getGithubCredentials(userId);
+        if (!github) {
             return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
         }
 
         // Fetch user's repositories
-        const reposResponse = await fetch("https://api.github.com/user/repos", {
-            headers: {
-                Authorization: `Bearer ${userData.githubToken}`,
-            },
-        });
-        const repos = await reposResponse.json();
+        const reposResponse = await githubFetch(github.token, "/user/repos?per_page=100");
+        const repos: { full_name: string }[] = await reposResponse.json();
+        if (!Array.isArray(repos)) {
+            return NextResponse.json({ error: "Failed to fetch repositories" }, { status: 502 });
+        }
 
         // Fetch languages for each repository
-        const languageStats: { [key: string]: number } = {};
+        const languageStats: Record<string, number> = {};
         await Promise.all(
-            repos.map(async (repo: any) => {
-                const languagesUrl = `https://api.github.com/repos/${repo.full_name}/languages`;
-                const languagesResponse = await fetch(languagesUrl, {
-                    headers: {
-                        Authorization: `Bearer ${userData.githubToken}`,
-                    },
-                });
-                const languages = await languagesResponse.json();
+            repos.map(async (repo) => {
+                const languagesResponse = await githubFetch(github.token, `/repos/${repo.full_name}/languages`);
+                if (!languagesResponse.ok) return;
+                const languages: Record<string, number> = await languagesResponse.json();
 
                 // Sum up bytes of code for each language
-                Object.entries(languages).forEach(([language, bytes]: [string, any]) => {
+                Object.entries(languages).forEach(([language, bytes]) => {
                     languageStats[language] = (languageStats[language] || 0) + bytes;
                 });
             })
@@ -49,7 +42,7 @@ export async function GET() {
         const languagesPercentage = Object.entries(languageStats)
             .map(([language, bytes]) => ({
                 language,
-                percentage: Math.round((bytes / total) * 100),
+                percentage: total ? Math.round((bytes / total) * 100) : 0,
                 bytes
             }))
             .sort((a, b) => b.bytes - a.bytes)

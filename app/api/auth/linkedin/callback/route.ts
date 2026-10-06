@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { consumeOAuthState, getCallbackUrl } from "@/lib/oauth";
+import { saveLinkedinConnection } from "@/lib/connections";
 
 export async function GET(request: Request) {
     try {
-        const user = await currentUser();
-
-        if (!user) {
-            console.log('No user found, redirecting to sign in');
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.redirect(new URL('/sign-in', request.url));
         }
 
         const { searchParams } = new URL(request.url);
-        const code = searchParams.get("code");
+        if (!(await consumeOAuthState("linkedin", searchParams.get("state")))) {
+            return NextResponse.json({ error: "Invalid or expired OAuth state" }, { status: 400 });
+        }
 
+        const code = searchParams.get("code");
         if (!code) {
             return NextResponse.json({ error: "No code provided" }, { status: 400 });
         }
@@ -29,15 +31,15 @@ export async function GET(request: Request) {
                 code,
                 client_id: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID!,
                 client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
-                redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/linkedin/callback`,
+                redirect_uri: getCallbackUrl(request, "linkedin"),
             }),
         });
 
         const data = await tokenResponse.json();
 
-        if (data.error) {
-            console.error("LinkedIn token error:", data);
-            return NextResponse.json({ error: data.error_description }, { status: 400 });
+        if (data.error || !data.access_token) {
+            console.error("LinkedIn token error:", data.error);
+            return NextResponse.json({ error: "LinkedIn authorization failed" }, { status: 400 });
         }
 
         // Get user info using OpenID Connect userinfo endpoint
@@ -47,30 +49,18 @@ export async function GET(request: Request) {
             },
         });
 
+        if (!userInfoResponse.ok) {
+            console.error("LinkedIn userinfo fetch failed:", userInfoResponse.status);
+            return NextResponse.json({ error: "Failed to fetch LinkedIn profile" }, { status: 502 });
+        }
+
         const userInfo = await userInfoResponse.json();
+        await saveLinkedinConnection(userId, data.access_token, userInfo);
 
-        // Store token and user info in MongoDB
-        const collection = await getCollection('users');
-        await collection.updateOne(
-            { userId: user.id },
-            {
-                $set: {
-                    linkedinToken: data.access_token,
-                    linkedinTokenUpdatedAt: new Date(),
-                    linkedinUserInfo: userInfo,
-                }
-            },
-            { upsert: true }
-        );
-
-        console.log('Successfully stored LinkedIn token and user info');
         return NextResponse.redirect(new URL('/linkedin?connected=true', request.url));
 
     } catch (error) {
         console.error("Callback error:", error);
-        return NextResponse.json({
-            error: "Failed to complete LinkedIn authentication",
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to complete LinkedIn authentication" }, { status: 500 });
     }
-} 
+}

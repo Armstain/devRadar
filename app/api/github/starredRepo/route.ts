@@ -1,31 +1,26 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { getGithubCredentials } from "@/lib/connections";
+import { githubFetch } from "@/lib/github";
+
 export async function GET() {
     try {
-        const user = await currentUser();
-        if (!user) {
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get GitHub token from MongoDB
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.githubToken) {
+        const github = await getGithubCredentials(userId);
+        if (!github) {
             return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
         }
 
-        // Fetch starred repositories
-        const starredResponse = await fetch("https://api.github.com/user/starred", {
-            headers: {
-                Authorization: `Bearer ${userData.githubToken}`,
-                Accept: "application/vnd.github.v3+json",
-            },
-        });
+        const starredResponse = await githubFetch(github.token, "/user/starred");
+        if (!starredResponse.ok) {
+            return NextResponse.json({ error: "Failed to fetch GitHub starred repos" }, { status: 502 });
+        }
 
-        const starredRepos = await starredResponse.json();
-        return NextResponse.json(starredRepos);
+        return NextResponse.json(await starredResponse.json());
 
     } catch (error) {
         console.error("GitHub starred repos fetch error:", error);

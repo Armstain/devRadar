@@ -3,7 +3,6 @@
 "use client";
 
 import {  useState } from 'react';
-import { useRouter } from 'next/navigation';
 import BlurFade from "@/components/ui/blur-fade";
 import { MagicCard } from "@/components/ui/magic-card";
 import { useQuery } from "@tanstack/react-query";
@@ -14,8 +13,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import NumberTicker from '@/components/ui/number-ticker';
 
 export default function GitHubActivityPage() {
-  const router = useRouter();
-  console.log(router);
   const [isGitHubConnected, setIsGitHubConnected] = useState<boolean | null>(null);
   const [starredPage, setStarredPage] = useState(1);
   const [commitsPage, setCommitsPage] = useState(1);

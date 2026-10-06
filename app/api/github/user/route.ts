@@ -1,32 +1,26 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { getGithubCredentials } from "@/lib/connections";
+import { githubFetch } from "@/lib/github";
 
 export async function GET() {
     try {
-        const user = await currentUser();
-        if (!user) {
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get GitHub token from MongoDB
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.githubToken) {
+        const github = await getGithubCredentials(userId);
+        if (!github) {
             return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
         }
 
-        // Fetch user details
-        const userDetailsResponse = await fetch("https://api.github.com/user", {
-            headers: {
-                Authorization: `Bearer ${userData.githubToken}`,
-                Accept: "application/vnd.github.v3+json",
-            },
-        });
+        const userDetailsResponse = await githubFetch(github.token, "/user");
+        if (!userDetailsResponse.ok) {
+            return NextResponse.json({ error: "Failed to fetch GitHub user details" }, { status: 502 });
+        }
 
-        const userDetails = await userDetailsResponse.json();
-        return NextResponse.json(userDetails);
+        return NextResponse.json(await userDetailsResponse.json());
 
     } catch (error) {
         console.error("GitHub user details fetch error:", error);
