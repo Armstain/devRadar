@@ -1,196 +1,139 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import axios from 'axios';
-import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useCreateApplication, useUpdateApplication } from "@/hooks/use-applications";
 import {
   APPLICATION_STATUSES,
   STATUS_LABELS,
-  normalizeStatus,
+  applicationCreateSchema,
+  type Application,
   type ApplicationInput,
   type ApplicationStatus,
 } from "@/lib/applications";
 
-type ApplicationFormValues = ApplicationInput;
+// Validate with the same schema the API uses, so the rules match exactly.
+const resolver: Resolver<ApplicationInput> = async (values) => {
+  const result = applicationCreateSchema.safeParse(values);
+  if (result.success) return { values: result.data, errors: {} };
+  const errors: Record<string, { type: string; message: string }> = {};
+  for (const issue of result.error.issues) {
+    const key = String(issue.path[0]);
+    errors[key] ??= { type: issue.code, message: issue.message };
+  }
+  return { values: {}, errors };
+};
 
 interface ApplicationDialogProps {
-  application?: {
-    id: string;
-    company: string;
-    position: string;
-    status: string;
-    link: string;
-    notes: string;
+  application?: Application;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ApplicationDialog({ application, trigger, open: openProp, onOpenChange }: ApplicationDialogProps) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
+  const createApplication = useCreateApplication();
+  const updateApplication = useUpdateApplication();
+
+  const defaults: ApplicationInput = {
+    company: application?.company ?? "",
+    position: application?.position ?? "",
+    status: application?.status ?? "applied",
+    link: application?.link ?? "",
+    notes: application?.notes ?? "",
   };
-}
 
-function initialStatus(status?: string): ApplicationStatus {
-  const normalized = normalizeStatus(status ?? "");
-  return APPLICATION_STATUSES.includes(normalized as ApplicationStatus)
-    ? (normalized as ApplicationStatus)
-    : "applied";
-}
-
-export function ApplicationDialog({ application }: ApplicationDialogProps) {
-  const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
-  
-  const form = useForm<ApplicationFormValues>({
-    defaultValues: {
-      company: application?.company || "",
-      position: application?.position || "",
-      status: initialStatus(application?.status),
-      link: application?.link || "",
-      notes: application?.notes || "",
-    },
-  });
-
+  const form = useForm<ApplicationInput>({ resolver, defaultValues: defaults });
+  const { errors, isSubmitting } = form.formState;
   const status = useWatch({ control: form.control, name: "status" });
 
-  const onSubmit = async (data: ApplicationFormValues) => {
+  const handleOpenChange = (next: boolean) => {
+    if (next) form.reset(defaults);
+    setOpen(next);
+  };
+
+  const onSubmit = async (data: ApplicationInput) => {
     try {
       if (application) {
-        await axios.patch(`/api/applications/${application.id}`, data);
+        await updateApplication.mutateAsync({ id: application.id, update: data });
+        toast.success("Application updated");
       } else {
-        await axios.post('/api/applications', data);
+        await createApplication.mutateAsync(data);
+        toast.success(`Added ${data.company}`);
       }
-
-      await queryClient.invalidateQueries({ 
-        queryKey: ['applications'],
-        exact: true,
-        refetchType: 'all'
-      });
-      
-      const statusMessages: Record<ApplicationStatus, string> = {
-        'applied': '🚀 Application submitted successfully!',
-        'in-progress': '📝 Application marked as in progress',
-        'offer': '🎉 Congratulations on the offer!',
-        'rejected': '💪 Keep going! More opportunities ahead'
-      };
-
-      const message = application
-        ? 'Application updated successfully'
-        : statusMessages[data.status];
-
-      toast(message, {
-        style: {
-          background: '#1E293B',
-          color: '#fff',
-          padding: '16px',
-          borderRadius: '8px',
-        },
-        duration: 3000,
-      });
-
       setOpen(false);
-      form.reset();
     } catch (error) {
       console.error("Error saving application:", error);
-      const message = axios.isAxiosError(error) && error.response?.status === 400
-        ? "Please check the form: some fields are invalid."
-        : "Failed to save application. Please try again.";
-      toast.error(message);
+      toast.error("Couldn’t save the application. Please try again.");
     }
   };
 
-  const onClose = () => {
-    setOpen(false);
-    form.reset();
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {application ? (
-          <Button variant="ghost" size="sm">
-            Edit
-          </Button>
-        ) : (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Application
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {trigger !== null ? (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button>
+              <Plus aria-hidden="true" />
+              Add application
+            </Button>
+          )}
+        </DialogTrigger>
+      ) : null}
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {application ? 'Edit Application' : 'Add New Application'}
-          </DialogTitle>
+          <DialogTitle>{application ? "Edit application" : "Add an application"}</DialogTitle>
+          <DialogDescription>
+            {application ? `${application.position} at ${application.company}` : "Track a role you’ve applied for or plan to."}
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="company">Company</label>
-            <Input 
-              {...form.register("company", { required: true })}
-              id="company" 
-              placeholder="Company name" 
-            />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" noValidate>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Company" htmlFor="company" error={errors.company?.message}>
+              <Input id="company" autoComplete="organization" placeholder="e.g. Lumen Labs" {...form.register("company")} />
+            </Field>
+            <Field label="Role" htmlFor="position" error={errors.position?.message}>
+              <Input id="position" autoComplete="organization-title" placeholder="e.g. Full-stack Engineer" {...form.register("position")} />
+            </Field>
           </div>
-          <div className="grid gap-2">
-            <label htmlFor="position">Position</label>
-            <Input 
-              {...form.register("position", { required: true })}
-              id="position" 
-              placeholder="Job title" 
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="status">Status</label>
-            <Select
-              value={status}
-              onValueChange={(value) => form.setValue("status", value as ApplicationStatus)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
+          <Field label="Stage" htmlFor="status">
+            <Select value={status} onValueChange={(value) => form.setValue("status", value as ApplicationStatus)}>
+              <SelectTrigger id="status">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {APPLICATION_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_LABELS[status]}
+                {APPLICATION_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABELS[s]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="link">Job Link</label>
-            <Input 
-              {...form.register("link")}
-              id="link" 
-              placeholder="URL to job posting" 
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="notes">Notes</label>
-            <Textarea 
-              {...form.register("notes")}
-              id="notes" 
-              placeholder="Add any notes about the application" 
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" onClick={onClose} variant="outline">Cancel</Button>
-            <Button type="submit">Save</Button>
+          </Field>
+          <Field label="Job post link" htmlFor="link" error={errors.link?.message} hint="Optional">
+            <Input id="link" type="url" inputMode="url" placeholder="https://" {...form.register("link")} />
+          </Field>
+          <Field label="Notes" htmlFor="notes" error={errors.notes?.message}>
+            <Textarea id="notes" placeholder="Who you spoke to, what stood out, next steps…" {...form.register("notes")} />
+          </Field>
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+            <Button variant="secondary" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving…" : application ? "Save changes" : "Add application"}
+            </Button>
           </div>
         </form>
       </DialogContent>
