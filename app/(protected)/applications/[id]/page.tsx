@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Monogram } from "@/components/ui/monogram";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useApplications, useUpdateApplication } from "@/hooks/use-applications";
-import { STATUS_LABELS, type Application, type ApplicationStatus } from "@/lib/applications";
+import { useApplication, useUpdateApplication } from "@/hooks/use-applications";
+import { STATUS_LABELS, type Application, type ApplicationStatus, type ApplicationWithEvents } from "@/lib/applications";
 import { plural, shortDate } from "@/lib/format";
 import { daysSince, FOLLOW_UP_DAYS, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
@@ -107,13 +107,30 @@ function nextStep(app: Application, now: Date) {
   }
 }
 
+// Newest first: stage changes from the event history, plus the latest edit
+// when it happened after the last stage change.
+function timeline(app: ApplicationWithEvents) {
+  const items = [...app.events].reverse().map((event) => ({
+    key: event.id,
+    when: event.createdAt,
+    title:
+      event.type === "created"
+        ? `Added as ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`
+        : `Moved from ${STATUS_LABELS[event.fromStatus ?? "applied"].toLowerCase()} to ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`,
+  }));
+  const lastEvent = app.events.at(-1);
+  if (!lastEvent || new Date(app.updatedAt).getTime() - new Date(lastEvent.createdAt).getTime() > 60_000) {
+    items.unshift({ key: "edited", when: app.updatedAt, title: "Details edited" });
+  }
+  return items;
+}
+
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: applications, isLoading } = useApplications();
+  const { data: app, isLoading } = useApplication(id);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const app = applications?.find((a) => a.id === id);
   const now = new Date();
 
   if (isLoading) {
@@ -210,17 +227,12 @@ export default function ApplicationDetailPage() {
             <div className="flex flex-col gap-4 p-6">
               <PanelHeader title="Timeline" as="h2" />
               <ol className="flex flex-col">
-                {[
-                  ...(app.updatedAt && app.updatedAt !== app.createdAt
-                    ? [{ title: "Last updated", when: app.updatedAt, current: true }]
-                    : []),
-                  { title: "Added to DevRadar", when: app.createdAt, current: !app.updatedAt },
-                ].map((event, i, list) => (
-                  <li key={event.title} className="flex gap-3.5">
+                {timeline(app).map((event, i, list) => (
+                  <li key={event.key} className="flex gap-3.5">
                     <span className="flex w-3 flex-col items-center">
                       <span
                         aria-hidden="true"
-                        className={cn("mt-1.5 size-2.5 rounded-full", event.current ? "bg-signal" : "border-[1.5px] border-muted")}
+                        className={cn("mt-1.5 size-2.5 rounded-full", i === 0 ? "bg-signal" : "border-[1.5px] border-muted")}
                       />
                       {i < list.length - 1 ? <span className="mt-1 w-px flex-1 bg-line" /> : null}
                     </span>

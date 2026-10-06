@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createOAuthState, getCallbackUrl } from "@/lib/oauth";
+import { logger } from "@/server/logger";
 
 // `repo` is needed to include private repositories in the stats; GitHub OAuth
 // apps have no read-only scope for them.
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
 
         const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
         if (!clientId) {
-            console.error("GitHub client ID is not configured");
+            logger.error("GitHub client ID is not configured");
             return NextResponse.json({ error: "GitHub configuration missing" }, { status: 500 });
         }
 
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
 
         return NextResponse.redirect(`https://github.com/login/oauth/authorize?${params}`);
     } catch (error) {
-        console.error("GitHub auth error:", error);
+        logger.error({ err: error }, "GitHub OAuth start failed");
         return NextResponse.json({ error: "Failed to initiate GitHub auth" }, { status: 500 });
     }
 }

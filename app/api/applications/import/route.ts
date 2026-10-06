@@ -1,38 +1,12 @@
-import { NextResponse } from "next/server";
-import { getCollection } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
 import { applicationImportSchema } from "@/lib/applications";
-import { readJson, validationError } from "@/lib/api";
+import { authed, json, readJson, validationError } from "@/server/http";
+import { createApplications } from "@/server/services/applications";
 
-export async function POST(req: Request) {
-    try {
-        const { userId } = await auth();
-        if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
+export const POST = authed("applications.import", async (request, { db, userId, log }) => {
+    const parsed = applicationImportSchema.safeParse(await readJson(request));
+    if (!parsed.success) return validationError(parsed.error);
 
-        const parsed = applicationImportSchema.safeParse(await readJson(req));
-        if (!parsed.success) {
-            return validationError(parsed.error);
-        }
-
-        const now = new Date();
-        const collection = await getCollection("applications");
-        const result = await collection.insertMany(
-            parsed.data.applications.map((app) => ({
-                ...app,
-                userId,
-                createdAt: now,
-                updatedAt: now,
-            }))
-        );
-
-        return NextResponse.json({
-            success: true,
-            imported: result.insertedCount,
-        });
-    } catch (error) {
-        console.error("[APPLICATIONS_IMPORT]", error);
-        return new NextResponse("Internal Error", { status: 500 });
-    }
-}
+    const created = await createApplications(db, userId, parsed.data.applications);
+    log.info({ count: created.length }, "applications imported");
+    return json({ success: true, imported: created.length });
+});

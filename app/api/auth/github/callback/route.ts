@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { consumeOAuthState, getCallbackUrl } from "@/lib/oauth";
-import { saveGithubConnection } from "@/lib/connections";
+import { getDb } from "@/server/db/client";
+import { logger } from "@/server/logger";
+import { saveGithubConnection } from "@/server/services/github-connections";
 
 export async function GET(request: Request) {
     try {
@@ -38,7 +40,7 @@ export async function GET(request: Request) {
         const data = await tokenResponse.json();
 
         if (data.error || !data.access_token) {
-            console.error("GitHub token error:", data.error);
+            logger.warn({ error: data.error }, "GitHub token exchange failed");
             return NextResponse.json({ error: "GitHub authorization failed" }, { status: 400 });
         }
 
@@ -51,17 +53,21 @@ export async function GET(request: Request) {
         });
 
         if (!userResponse.ok) {
-            console.error("GitHub user fetch failed:", userResponse.status);
+            logger.warn({ status: userResponse.status }, "GitHub user fetch failed");
             return NextResponse.json({ error: "Failed to fetch GitHub profile" }, { status: 502 });
         }
 
         const githubUser = await userResponse.json();
-        await saveGithubConnection(userId, data.access_token, githubUser.login);
+        await saveGithubConnection(getDb(), userId, {
+            token: data.access_token,
+            username: githubUser.login,
+            scopes: typeof data.scope === "string" ? data.scope : "",
+        });
 
         return NextResponse.redirect(new URL('/dashboard?github=connected', request.url));
 
     } catch (error) {
-        console.error("Callback error:", error);
+        logger.error({ err: error }, "GitHub OAuth callback failed");
         return NextResponse.json({ error: "Failed to complete GitHub authentication" }, { status: 500 });
     }
 }

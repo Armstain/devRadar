@@ -38,7 +38,8 @@ export default function InterviewPrepPage() {
       if (response?.status === 400) {
         toast.error("Enter a topic (2–100 characters) and 1–10 questions");
       } else {
-        toast.error(typeof response?.data === "string" ? response.data : "Couldn’t generate questions. Please try again.");
+        const message = (response?.data as { error?: string } | undefined)?.error;
+        toast.error(message ?? "Couldn’t generate questions. Please try again.");
       }
     },
   });
