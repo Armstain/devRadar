@@ -48,7 +48,12 @@ export default function AIQuestionGenerator() {
         },
         onError: (error) => {
             console.error('Generation error:', error);
-            toast.error('Failed to generate questions');
+            const response = axios.isAxiosError(error) ? error.response : undefined;
+            if (response?.status === 400) {
+                toast.error('Enter a topic (2–100 characters) and 1–10 questions');
+            } else {
+                toast.error(typeof response?.data === 'string' ? response.data : 'Failed to generate questions');
+            }
         }
     });
 
