@@ -3,7 +3,7 @@ import {
     applicationCreateSchema,
     applicationImportSchema,
     applicationUpdateSchema,
-    objectIdSchema,
+    uuidSchema,
 } from "./applications";
 
 describe("applicationCreateSchema", () => {
@@ -83,10 +83,10 @@ describe("applicationImportSchema", () => {
     });
 });
 
-describe("objectIdSchema", () => {
-    it("accepts 24-character hex ids only", () => {
-        expect(objectIdSchema.safeParse("507f1f77bcf86cd799439011").success).toBe(true);
-        expect(objectIdSchema.safeParse("123").success).toBe(false);
-        expect(objectIdSchema.safeParse("zzzzzzzzzzzzzzzzzzzzzzzz").success).toBe(false);
+describe("uuidSchema", () => {
+    it("accepts UUIDs only", () => {
+        expect(uuidSchema.safeParse("3f2b8c1e-9d4a-4c6b-8a7e-1b2c3d4e5f60").success).toBe(true);
+        expect(uuidSchema.safeParse("507f1f77bcf86cd799439011").success).toBe(false);
+        expect(uuidSchema.safeParse("../etc/passwd").success).toBe(false);
     });
 });

@@ -57,7 +57,7 @@ export const applicationImportSchema = z.object({
     applications: z.array(applicationCreateSchema).min(1).max(500),
 });
 
-export const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid id");
+export const uuidSchema = z.uuid({ error: "Invalid id" });
 
 export type ApplicationInput = z.infer<typeof applicationCreateSchema>;
 export type ApplicationUpdate = z.infer<typeof applicationUpdateSchema>;
@@ -65,5 +65,17 @@ export type ApplicationUpdate = z.infer<typeof applicationUpdateSchema>;
 export interface Application extends ApplicationInput {
     id: string;
     createdAt: string;
-    updatedAt?: string;
+    updatedAt: string;
+}
+
+export interface ApplicationEvent {
+    id: string;
+    type: "created" | "status_changed";
+    fromStatus: ApplicationStatus | null;
+    toStatus: ApplicationStatus | null;
+    createdAt: string;
+}
+
+export interface ApplicationWithEvents extends Application {
+    events: ApplicationEvent[];
 }

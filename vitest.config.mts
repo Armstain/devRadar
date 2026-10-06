@@ -11,5 +11,9 @@ export default defineConfig({
         environment: "node",
         include: ["**/*.test.ts"],
         exclude: ["node_modules/**", ".next/**"],
+        // Database tests start an in-process Postgres (PGlite), which takes a
+        // few seconds to boot.
+        testTimeout: 30_000,
+        hookTimeout: 30_000,
     },
 });

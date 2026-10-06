@@ -27,6 +27,15 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+      - name: Migrations match the schema
+        run: |
+          npx drizzle-kit generate --name ci-drift-check
+          if [ -n "$(git status --porcelain server/db/migrations)" ]; then
+            echo "::error::server/db/schema.ts changed without a migration. Run npm run db:generate and commit the result."
+            git status --porcelain server/db/migrations
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
         env:

@@ -14,7 +14,7 @@ const app = (status: Application["status"], createdDaysAgo: number, updatedDaysA
     link: "",
     notes: "",
     createdAt: daysAgo(createdDaysAgo),
-    updatedAt: updatedDaysAgo === undefined ? undefined : daysAgo(updatedDaysAgo),
+    updatedAt: daysAgo(updatedDaysAgo ?? createdDaysAgo),
 });
 
 describe("needsFollowUp", () => {
