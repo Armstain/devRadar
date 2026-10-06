@@ -7,6 +7,9 @@ const isPublicRoute = createRouteMatcher([
     '/_next(.*)',
     '/favicon.ico',
     '/design',
+    // Verified by their own signatures rather than a Clerk session
+    '/api/inngest',
+    '/api/webhooks(.*)',
 ])
 
 export const proxy = clerkMiddleware(async (auth, request) => {
