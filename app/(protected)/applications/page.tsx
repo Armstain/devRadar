@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import BlurFade from "@/components/ui/blur-fade";
@@ -7,17 +6,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ApplicationsTable } from "@/components/applications/applications-table"
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-// import { CSVImport } from "@/components/applications/csv-import"; 
+import { CSVImport } from "@/components/applications/csv-import";
+import { normalizeStatus, type Application } from "@/lib/applications";
 
-interface Application {
-  id: string;
-  company: string;
-  position: string;
-  status: string;
-  link: string;
-  notes: string;
-  createdAt: string;
-}
+type StoredApplication = Omit<Application, "id"> & { _id: string };
 
 export default function ApplicationsPage() {
   const queryClient = useQueryClient()
@@ -25,14 +17,15 @@ export default function ApplicationsPage() {
   const { data: applications, isLoading } = useQuery<Application[]>({
     queryKey: ['applications'],
     queryFn: async () => {
-      const response = await axios.get('/api/applications');
-      return response.data.map((app: any) => ({
+      const response = await axios.get<StoredApplication[]>('/api/applications');
+      return response.data.map((app) => ({
         id: app._id,
         company: app.company,
         position: app.position,
-        status: app.status,
-        link: app.link,
-        notes: app.notes,
+        // Older records may use legacy spellings such as "interviewing"
+        status: normalizeStatus(app.status) as Application["status"],
+        link: app.link ?? "",
+        notes: app.notes ?? "",
         createdAt: app.createdAt,
       }));
     },
@@ -40,13 +33,8 @@ export default function ApplicationsPage() {
 
   const deleteApplication = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        const response = await axios.delete(`/api/applications/${id}`);
-        return response.data;
-      } catch (error) {
-        console.error('Error deleting application:', error);
-        throw error;
-      }
+      const response = await axios.delete(`/api/applications/${id}`);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
@@ -86,7 +74,7 @@ export default function ApplicationsPage() {
           Job Applications
         </h1>
         <div className="flex items-center gap-4">
-          {/* <CSVImport /> */}
+          <CSVImport />
           <ApplicationDialog />
         </div>
       </div>

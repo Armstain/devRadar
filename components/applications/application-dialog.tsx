@@ -22,14 +22,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import axios from 'axios';
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  APPLICATION_STATUSES,
+  STATUS_LABELS,
+  normalizeStatus,
+  type ApplicationInput,
+  type ApplicationStatus,
+} from "@/lib/applications";
 
-interface ApplicationFormValues {
-  company: string;
-  position: string;
-  status: string;
-  link: string;
-  notes: string;
-}
+type ApplicationFormValues = ApplicationInput;
 
 interface ApplicationDialogProps {
   application?: {
@@ -42,6 +43,13 @@ interface ApplicationDialogProps {
   };
 }
 
+function initialStatus(status?: string): ApplicationStatus {
+  const normalized = normalizeStatus(status ?? "");
+  return APPLICATION_STATUSES.includes(normalized as ApplicationStatus)
+    ? (normalized as ApplicationStatus)
+    : "applied";
+}
+
 export function ApplicationDialog({ application }: ApplicationDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -50,7 +58,7 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
     defaultValues: {
       company: application?.company || "",
       position: application?.position || "",
-      status: application?.status || "",
+      status: initialStatus(application?.status),
       link: application?.link || "",
       notes: application?.notes || "",
     },
@@ -58,48 +66,47 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
 
   const onSubmit = async (data: ApplicationFormValues) => {
     try {
-      console.log('Submitting data:', data);
-      const response = application
-        ? await axios.patch('/api/applications', { id: application.id, ...data })
-        : await axios.post('/api/applications', data);
-      
-      console.log('Response:', response.data);
-
-      if (response.status === 200) {
-        console.log('Invalidating queries...');
-        await queryClient.invalidateQueries({ 
-          queryKey: ['applications'],
-          exact: true,
-          refetchType: 'all'
-        });
-        
-        const statusMessages = {
-          'applied': '🚀 Application submitted successfully!',
-          'in-progress': '📝 Application marked as in progress',
-          'offer': '🎉 Congratulations on the offer!',
-          'rejected': '💪 Keep going! More opportunities ahead'
-        };
-
-        const message = application
-          ? 'Application updated successfully'
-          : (statusMessages[data.status as keyof typeof statusMessages] || 'Application saved successfully');
-
-        toast(message, {
-          style: {
-            background: '#1E293B',
-            color: '#fff',
-            padding: '16px',
-            borderRadius: '8px',
-          },
-          duration: 3000,
-        });
-
-        setOpen(false);
-        form.reset();
+      if (application) {
+        await axios.patch(`/api/applications/${application.id}`, data);
+      } else {
+        await axios.post('/api/applications', data);
       }
+
+      await queryClient.invalidateQueries({ 
+        queryKey: ['applications'],
+        exact: true,
+        refetchType: 'all'
+      });
+      
+      const statusMessages: Record<ApplicationStatus, string> = {
+        'applied': '🚀 Application submitted successfully!',
+        'in-progress': '📝 Application marked as in progress',
+        'offer': '🎉 Congratulations on the offer!',
+        'rejected': '💪 Keep going! More opportunities ahead'
+      };
+
+      const message = application
+        ? 'Application updated successfully'
+        : statusMessages[data.status];
+
+      toast(message, {
+        style: {
+          background: '#1E293B',
+          color: '#fff',
+          padding: '16px',
+          borderRadius: '8px',
+        },
+        duration: 3000,
+      });
+
+      setOpen(false);
+      form.reset();
     } catch (error) {
       console.error("Error saving application:", error);
-      toast.error("Failed to save application. Please try again.");
+      const message = axios.isAxiosError(error) && error.response?.status === 400
+        ? "Please check the form: some fields are invalid."
+        : "Failed to save application. Please try again.";
+      toast.error(message);
     }
   };
 
@@ -147,15 +154,19 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
           </div>
           <div className="grid gap-2">
             <label htmlFor="status">Status</label>
-            <Select onValueChange={(value) => form.setValue("status", value)}>
+            <Select
+              value={form.watch("status")}
+              onValueChange={(value) => form.setValue("status", value as ApplicationStatus)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="applied">Applied</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="offer">Offer</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                {APPLICATION_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {STATUS_LABELS[status]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

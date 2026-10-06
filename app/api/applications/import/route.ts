@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getCollection } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
+import { applicationImportSchema } from "@/lib/applications";
+import { readJson, validationError } from "@/lib/api";
 
 export async function POST(req: Request) {
     try {
@@ -9,26 +11,21 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const body = await req.json();
-        const { applications } = body;
-
-        if (!Array.isArray(applications)) {
-            return new NextResponse("Invalid request body", { status: 400 });
+        const parsed = applicationImportSchema.safeParse(await readJson(req));
+        if (!parsed.success) {
+            return validationError(parsed.error);
         }
 
-        const db = await getDb();
-        const collection = db.collection("applications");
-
-        // Prepare applications with userId and timestamps
-        const preparedApplications = applications.map(app => ({
-            ...app,
-            userId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        }));
-
-        // Insert all applications
-        const result = await collection.insertMany(preparedApplications);
+        const now = new Date();
+        const collection = await getCollection("applications");
+        const result = await collection.insertMany(
+            parsed.data.applications.map((app) => ({
+                ...app,
+                userId,
+                createdAt: now,
+                updatedAt: now,
+            }))
+        );
 
         return NextResponse.json({
             success: true,
