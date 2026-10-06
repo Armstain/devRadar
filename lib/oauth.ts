@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 
-export type OAuthProvider = "github" | "linkedin";
+export type OAuthProvider = "github";
 
 const STATE_TTL_SECONDS = 10 * 60;
 

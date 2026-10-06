@@ -30,14 +30,13 @@ describe("OAuth state", () => {
     });
 
     it("rejects a missing or forged state", async () => {
-        await createOAuthState("linkedin");
-        expect(await consumeOAuthState("linkedin", "forged")).toBe(false);
-        expect(await consumeOAuthState("linkedin", null)).toBe(false);
+        await createOAuthState("github");
+        expect(await consumeOAuthState("github", "forged")).toBe(false);
+        expect(await consumeOAuthState("github", null)).toBe(false);
     });
 
-    it("does not accept one provider's state for another", async () => {
-        const state = await createOAuthState("github");
-        expect(await consumeOAuthState("linkedin", state)).toBe(false);
+    it("rejects a callback when no state cookie was set", async () => {
+        expect(await consumeOAuthState("github", "anything")).toBe(false);
     });
 });
 
@@ -52,8 +51,8 @@ describe("getCallbackUrl", () => {
 
     it("falls back to the request origin", () => {
         vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
-        expect(getCallbackUrl(new Request("https://preview.example.com/api/auth/linkedin"), "linkedin")).toBe(
-            "https://preview.example.com/api/auth/linkedin/callback"
+        expect(getCallbackUrl(new Request("https://preview.example.com/api/auth/github"), "github")).toBe(
+            "https://preview.example.com/api/auth/github/callback"
         );
         vi.unstubAllEnvs();
     });

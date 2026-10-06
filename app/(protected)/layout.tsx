@@ -4,6 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 import { Sidebar } from "@/components/ui/sidebar";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { SignInButton } from "@clerk/nextjs";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export default function ProtectedLayout({
   children,
@@ -17,7 +18,8 @@ export default function ProtectedLayout({
       </SignedIn>
       <main className="flex-1 overflow-auto">
         <SignedIn>
-          <div className="flex justify-end p-4">
+          <div className="flex justify-end items-center gap-3 p-4">
+            <ModeToggle />
             <UserButton />
           </div>
           {children}

@@ -36,11 +36,6 @@ export interface DashboardStats {
       averagePerDay: number;
     };
   };
-  linkedin?: {
-    connected: boolean;
-    connections?: number;
-    posts?: number;
-  };
 }
 
 // Custom tooltip component

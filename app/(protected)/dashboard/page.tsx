@@ -5,8 +5,7 @@ import axios from "axios";
 import { MagicCard } from "@/components/ui/magic-card";
 import BlurFade from "@/components/ui/blur-fade";
 import { GitHubLoginButton } from "@/components/github-login-button";
-import { LinkedInLoginButton } from "@/components/linkedin-login-button";
-import { Briefcase, Github, LinkedinIcon, Users } from "lucide-react";
+import { Briefcase, Github, Users } from "lucide-react";
 import DashboardCharts, { type DashboardStats } from "@/components/dashboard-charts";
 import { normalizeStatus, type ApplicationStatus } from "@/lib/applications";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -42,14 +41,8 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const { data: linkedinData, isLoading: isLoadingLinkedin } = useQuery({
-    queryKey: ['linkedin-user'],
-    queryFn: () => axios.get('/api/linkedin/user').then(res => res.data),
-    retry: false, // Don't retry if LinkedIn is not connected
-  });
-
   // Combine loading states
-  const isLoading = isLoadingApps || isLoadingGithub || isLoadingLinkedin;
+  const isLoading = isLoadingApps || isLoadingGithub;
 
   const countStatus = (status: ApplicationStatus) =>
     applications?.filter(app => normalizeStatus(app.status) === status).length ?? 0;
@@ -74,11 +67,6 @@ export default function DashboardPage() {
         totalContributions: githubData.contributions?.totalContributions || 0,
         averagePerDay: githubData.contributions?.averagePerDay || 0
       }
-    } : { connected: false },
-    linkedin: linkedinData ? {
-      connected: true,
-      connections: linkedinData.numConnections,
-      posts: linkedinData.numPosts,
     } : { connected: false },
   };
 
@@ -162,7 +150,7 @@ export default function DashboardPage() {
       <DashboardCharts stats={stats} />
 
       {/* Integrations Status */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1">
         <BlurFade delay={0.5}>
           <MagicCard className="p-6">
             <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
@@ -197,25 +185,6 @@ export default function DashboardPage() {
           </MagicCard>
         </BlurFade>
 
-        <BlurFade delay={0.6}>
-          <MagicCard className="p-6">
-            <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              LinkedIn Integration
-            </h2>
-            {stats?.linkedin?.connected ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <LinkedinIcon className="h-10 w-10" />
-                  <div>
-                    <p className="text-sm text-green-500 font-medium">Connected</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <LinkedInLoginButton />
-            )}
-          </MagicCard>
-        </BlurFade>
       </div>
     </div>
   );

@@ -6,12 +6,6 @@ export interface GithubCredentials {
     username?: string;
 }
 
-export interface LinkedinCredentials {
-    token: string;
-    // LinkedIn member id (the OpenID `sub` claim)
-    memberId?: string;
-}
-
 export async function getGithubCredentials(userId: string): Promise<GithubCredentials | null> {
     const users = await getCollection("users");
     const user = await users.findOne({ userId });
@@ -30,33 +24,6 @@ export async function saveGithubConnection(userId: string, token: string, userna
                 githubToken: encryptToken(token),
                 githubTokenUpdatedAt: new Date(),
                 githubUsername: username,
-            },
-        },
-        { upsert: true }
-    );
-}
-
-export async function getLinkedinCredentials(userId: string): Promise<LinkedinCredentials | null> {
-    const users = await getCollection("users");
-    const user = await users.findOne({ userId });
-    if (!user?.linkedinToken) {
-        return null;
-    }
-    return {
-        token: decryptToken(user.linkedinToken),
-        memberId: user.linkedinUserInfo?.id ?? user.linkedinUserInfo?.sub,
-    };
-}
-
-export async function saveLinkedinConnection(userId: string, token: string, userInfo: unknown) {
-    const users = await getCollection("users");
-    await users.updateOne(
-        { userId },
-        {
-            $set: {
-                linkedinToken: encryptToken(token),
-                linkedinTokenUpdatedAt: new Date(),
-                linkedinUserInfo: userInfo,
             },
         },
         { upsert: true }

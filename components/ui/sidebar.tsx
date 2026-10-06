@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils"
 import {
   Briefcase,
   Github,
-  LinkedinIcon,
   Users,
   LayoutDashboard,
   Menu,
@@ -30,12 +29,6 @@ const routes = [
     label: "GitHub Activity",
     icon: Github,
     href: "/github",
-    
-  },
-  {
-    label: "LinkedIn",
-    icon: LinkedinIcon,
-    href: "/linkedin",
     
   },
   {
