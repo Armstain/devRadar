@@ -11,7 +11,7 @@ import { parseApplicationsCsv } from '@/lib/csv-import';
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_ROWS = 500;
 
-export function CSVImport() {
+export function CSVImport({ size = "md" }: { size?: "md" | "lg" }) {
   const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
 
@@ -72,18 +72,19 @@ export function CSVImport() {
         type="file"
         accept=".csv,text/csv"
         onChange={handleFileUpload}
-        className="hidden"
+        className="peer sr-only"
         id="csv-upload"
         disabled={isUploading}
       />
       <Button
-        variant="outline"
-        className="cursor-pointer"
+        variant="secondary"
+        size={size}
+        className="cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-signal"
         disabled={isUploading}
         asChild
       >
         <label htmlFor="csv-upload">
-          <Upload className="mr-2 h-4 w-4" />
+          <Upload aria-hidden="true" />
           {isUploading ? 'Importing…' : 'Import CSV'}
         </label>
       </Button>

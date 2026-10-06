@@ -1,136 +1,144 @@
 "use client";
 
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
-import ReactMarkdown from 'react-markdown';
-import { toast } from 'react-hot-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { Sparkles } from "lucide-react";
+import { Markdown } from "@/components/markdown";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Panel } from "@/components/ui/panel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-import ShinyButton from '@/components/ui/shiny-button';
+const DIFFICULTIES = [
+  { value: "beginner", label: "Junior" },
+  { value: "intermediate", label: "Mid-level" },
+  { value: "advanced", label: "Senior" },
+] as const;
 
-export default function AIQuestionGenerator() {
-    const [topic, setTopic] = useState('');
-    const [difficulty, setDifficulty] = useState('intermediate');
-    const [count, setCount] = useState(5);
-    const [response, setResponse] = useState('');
+const SUGGESTIONS = ["React performance", "System design", "PostgreSQL indexing", "Node.js streams", "Testing strategy"];
 
-    
+export default function InterviewPrepPage() {
+  const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<string>("intermediate");
+  const [count, setCount] = useState(5);
+  const [result, setResult] = useState<{ topic: string; text: string } | null>(null);
 
-    const generateQuestions = useMutation({
-        mutationFn: async () => {
-            const response = await axios.post('/api/interview-questions/generate', {
-                topic,
-                difficulty,
-                count
-            });
-            return response.data;
-        },
-        onSuccess: (data) => {
-            // Store the raw response
-            setResponse(data);
-            toast.success('Questions generated!');
-        },
-        onError: (error) => {
-            console.error('Generation error:', error);
-            const response = axios.isAxiosError(error) ? error.response : undefined;
-            if (response?.status === 400) {
-                toast.error('Enter a topic (2–100 characters) and 1–10 questions');
-            } else {
-                toast.error(typeof response?.data === 'string' ? response.data : 'Failed to generate questions');
-            }
-        }
-    });
+  const generate = useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.post<string>("/api/interview-questions/generate", { topic, difficulty, count });
+      return data;
+    },
+    onSuccess: (text) => setResult({ topic: topic.trim(), text }),
+    onError: (error) => {
+      const response = axios.isAxiosError(error) ? error.response : undefined;
+      if (response?.status === 400) {
+        toast.error("Enter a topic (2–100 characters) and 1–10 questions");
+      } else {
+        toast.error(typeof response?.data === "string" ? response.data : "Couldn’t generate questions. Please try again.");
+      }
+    },
+  });
 
-   
+  const canSubmit = topic.trim().length >= 2 && !generate.isPending;
 
-    return (
-        
-            <div className="p-6 w-full">
-                <h2 className="text-xl font-semibold mb-4 text-white text-center">AI Question Generator</h2>
-                
-                <div className="space-y-4 md:space-y-0 w-full flex flex-col md:flex-row justify-center items-center md:space-x-4">
-                    <Input
-                        type="text"
-                        placeholder="Enter topic (e.g., React Hooks, Node.js, Python)"
-                        className="w-full md:w-2/5"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                    />
+  return (
+    <div className="flex flex-col gap-7">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-semibold tracking-tight">Interview prep</h1>
+        <p className="max-w-2xl text-muted">
+          Practice questions for any topic, with what the interviewer is listening for and the points a strong answer covers.
+        </p>
+      </header>
 
-                    <Select
-                        value={difficulty}
-                        onValueChange={(value) => setDifficulty(value)}
-                    >
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Select difficulty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">Intermediate</SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Input
-                        type="number"
-                        min="1"
-                        max="10"
-                        className="w-full md:w-[100px]"
-                        placeholder="Questions"
-                        value={count}
-                        onChange={(e) => setCount(Number(e.target.value))}
-                    />
-
-                    <ShinyButton
-                        className="w-full md:w-[180px]"
-                        onClick={() => generateQuestions.mutate()}
-                        disabled={!topic || generateQuestions.isPending}
-                    >
-                        <h2 className="font-semibold py-0.5">
-                        {generateQuestions.isPending ? 'Generating...' : 'Generate Questions'}
-                        </h2>
-                    </ShinyButton>
-                </div>
-
-                {/* Generated Questions */}
-                {response && (
-                    <div className="mt-8 max-w-4xl mx-auto px-4">
-                        <ReactMarkdown
-                            components={{
-                                h3: ({ children }) => (
-                                    <h3 className="text-xl text-white font-bold mt-8 mb-4 text-primary">{children}</h3>
-                                ),
-                                h4: ({ children }) => (
-                                    <h4 className="text-lg text-white font-semibold mt-4 mb-2">{children}</h4>
-                                ),
-                                p: ({ children }) => (
-                                    <p className="text-white my-2">{children}</p>
-                                ),
-                                ul: ({ children }) => (
-                                    <ul className="list-disc pl-6 space-y-2 my-4">{children}</ul>
-                                ),
-                                li: ({ children }) => (
-                                    <li className="text-white">{children}</li>
-                                ),
-                                em: ({ children }) => (
-                                    <em className="block text-white my-2">{children}</em>
-                                ),
-                            }}
-                        >
-                            {response}
-                        </ReactMarkdown>
-                    </div>
-                )}
+      <Panel>
+        <form
+          className="flex flex-col gap-4 p-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canSubmit) generate.mutate();
+          }}
+        >
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_120px]">
+            <Field label="Topic" htmlFor="topic">
+              <Input
+                id="topic"
+                value={topic}
+                maxLength={100}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g. React hooks, system design, SQL joins"
+              />
+            </Field>
+            <Field label="Level" htmlFor="difficulty">
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger id="difficulty">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIFFICULTIES.map((d) => (
+                    <SelectItem key={d.value} value={d.value}>
+                      {d.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Questions" htmlFor="count">
+              <Input
+                id="count"
+                type="number"
+                min={1}
+                max={10}
+                value={count}
+                onChange={(e) => setCount(Math.min(10, Math.max(1, Number(e.target.value) || 1)))}
+                className="font-mono"
+              />
+            </Field>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2" aria-label="Suggested topics">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTopic(s)}
+                  className="min-h-8 rounded-full border border-line px-3 text-[13px] text-muted transition-colors hover:border-muted/50 hover:text-ink"
+                >
+                  {s}
+                </button>
+              ))}
             </div>
-            
-       
-    );
+            <Button type="submit" disabled={!canSubmit}>
+              <Sparkles aria-hidden="true" />
+              {generate.isPending ? "Generating…" : "Generate questions"}
+            </Button>
+          </div>
+        </form>
+      </Panel>
+
+      <div aria-live="polite" aria-busy={generate.isPending}>
+        {generate.isPending ? (
+          <Panel className="flex flex-col gap-3 p-8">
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="mt-4 h-6 w-2/5" />
+            <Skeleton className="h-4 w-full" />
+          </Panel>
+        ) : result ? (
+          <Panel>
+            <article className="mx-auto max-w-3xl p-8">
+              <span className="label-mono">{result.topic}</span>
+              <div className="mt-4">
+                <Markdown>{result.text}</Markdown>
+              </div>
+            </article>
+          </Panel>
+        ) : null}
+      </div>
+    </div>
+  );
 }

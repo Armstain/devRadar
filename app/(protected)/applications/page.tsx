@@ -1,139 +1,138 @@
 "use client";
-import { ApplicationDialog } from "@/components/applications/application-dialog";
-import BlurFade from "@/components/ui/blur-fade";
-import { MagicCard } from "@/components/ui/magic-card";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { ApplicationsTable } from "@/components/applications/applications-table"
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
 import { CSVImport } from "@/components/applications/csv-import";
-import { normalizeStatus, type Application } from "@/lib/applications";
+import { PipelineTable } from "@/components/applications/pipeline-table";
+import { FirstRun } from "@/components/dashboard/first-run";
+import { Input } from "@/components/ui/input";
+import { Panel } from "@/components/ui/panel";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useApplications } from "@/hooks/use-applications";
+import { useHydrated } from "@/hooks/use-hydrated";
+import type { Application } from "@/lib/applications";
+import { plural } from "@/lib/format";
+import { matchesView, type PipelineView } from "@/lib/pipeline";
+import { cn } from "@/lib/utils";
 
-type StoredApplication = Omit<Application, "id"> & { _id: string };
+type Filter = "all" | PipelineView | "applied" | "rejected";
 
-export default function ApplicationsPage() {
-  const queryClient = useQueryClient()
-  
-  const { data: applications, isLoading } = useQuery<Application[]>({
-    queryKey: ['applications'],
-    queryFn: async () => {
-      const response = await axios.get<StoredApplication[]>('/api/applications');
-      return response.data.map((app) => ({
-        id: app._id,
-        company: app.company,
-        position: app.position,
-        // Older records may use legacy spellings such as "interviewing"
-        status: normalizeStatus(app.status) as Application["status"],
-        link: app.link ?? "",
-        notes: app.notes ?? "",
-        createdAt: app.createdAt,
-      }));
-    },
-  });
+const filters: { id: Filter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "follow-up", label: "Needs follow-up" },
+  { id: "applied", label: "Applied" },
+  { id: "interviews", label: "In progress" },
+  { id: "offers", label: "Offers" },
+  { id: "rejected", label: "Rejected" },
+];
 
-  const deleteApplication = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await axios.delete(`/api/applications/${id}`);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
-    },
-    onError: (error) => {
-      console.error('Delete mutation failed:', error);
-      alert('Failed to delete application. Please try again.');
-    },
-  });
+function applyFilter(apps: Application[], filter: Filter, now: Date) {
+  if (filter === "all") return apps;
+  if (filter === "applied" || filter === "rejected") return apps.filter((a) => a.status === filter);
+  return apps.filter((a) => matchesView(a, filter, now));
+}
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this application?')) {
-      deleteApplication.mutate(id)
-    }
-  }
+function PipelinePage() {
+  const searchParams = useSearchParams();
+  const requested = searchParams.get("view") as Filter | null;
+  const filter: Filter = filters.some((f) => f.id === requested) ? (requested as Filter) : "all";
+  const [query, setQuery] = useState("");
+  // Hydrates inside a Suspense boundary, so wait until hydrated before using
+  // cached data the server didn't render.
+  const hydrated = useHydrated();
+  const applicationsQuery = useApplications();
+  const applications = hydrated ? applicationsQuery.data : undefined;
+  const isLoading = !hydrated || applicationsQuery.isLoading;
+  const isError = hydrated && applicationsQuery.isError;
+  const now = new Date();
 
-  const counts = applications?.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>) || {};
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-8">
-        <LoadingSpinner className="w-12 h-12" />
-        <p className="mt-4 text-lg text-muted-foreground animate-pulse">
-          Loading applications...
-        </p>
-      </div>
-    );
-  }
+  const all = applications ?? [];
+  const q = query.trim().toLowerCase();
+  const visible = applyFilter(all, filter, now).filter(
+    (a) => !q || a.company.toLowerCase().includes(q) || a.position.toLowerCase().includes(q)
+  );
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-          Job Applications
-        </h1>
-        <div className="flex items-center gap-4">
-          <CSVImport />
-          <ApplicationDialog />
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Pipeline</h1>
+          <p className="text-muted">{isLoading ? "Loading…" : `${plural(all.length, "application")} tracked`}</p>
         </div>
-      </div>
+        <CSVImport />
+      </header>
 
-      {/* Status Overview Cards */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-        <BlurFade delay={0.25} inView>
-          <MagicCard className="p-6">
-            <div className="space-y-3">
-              <p className="text-base text-muted-foreground font-medium">Applied</p>
-              <p className="text-3xl font-bold">{counts['applied'] || 0}</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade key="in-progress" delay={0.5} inView>
-          <MagicCard className="p-6">
-            <div className="space-y-3">
-              <p className="text-base text-muted-foreground font-medium">In Progress</p>
-              <p className="text-3xl font-bold">{counts['in-progress'] || 0}</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade key="offer" delay={0.75} inView>
-          <MagicCard className="p-6">
-            <div className="space-y-3">
-              <p className="text-base text-muted-foreground font-medium">Offer</p>
-              <p className="text-3xl font-bold">{counts['offer'] || 0}</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-        <BlurFade key="rejected" delay={1} inView>
-          <MagicCard className="p-6">
-            <div className="space-y-3">
-              <p className="text-base text-muted-foreground font-medium">Rejected</p>
-              <p className="text-3xl font-bold">{counts['rejected'] || 0}</p>
-            </div>
-          </MagicCard>
-        </BlurFade>
-      </div>
-
-      {/* Applications Table */}
-      <div>
-        <div className="p-6 space-y-6 overflow-x-auto rounded-lg bg-card/50">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              All Applications
-            </h2>
-            <div className="mt-2 sm:mt-0 text-lg text-muted-foreground">
-              Total Applications: {applications?.length || 0}
+      {isError ? (
+        <Panel className="p-8 text-center text-muted">Couldn’t load your applications. Refresh to try again.</Panel>
+      ) : isLoading ? (
+        <Skeleton className="h-96 rounded-xl" />
+      ) : !all.length ? (
+        <FirstRun />
+      ) : (
+        <Panel className="overflow-hidden">
+          <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <nav aria-label="Filter applications" className="-mx-1 flex gap-1 overflow-x-auto px-1">
+              {filters.map((f) => {
+                const count = applyFilter(all, f.id, now).length;
+                const current = f.id === filter;
+                return (
+                  <Link
+                    key={f.id}
+                    href={f.id === "all" ? "/applications" : `/applications?view=${f.id}`}
+                    aria-current={current ? "page" : undefined}
+                    className={cn(
+                      "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm transition-colors",
+                      current ? "bg-raised font-semibold" : "text-muted hover:bg-raised hover:text-ink"
+                    )}
+                  >
+                    {f.label}
+                    <span
+                      className={cn(
+                        "font-mono text-xs",
+                        f.id === "follow-up" && count ? "text-caution" : "text-muted"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="relative sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter by company or role"
+                aria-label="Filter by company or role"
+                className="h-9 pl-9 text-sm"
+              />
             </div>
           </div>
-          
-          <ApplicationsTable 
-            data={applications ?? []} 
-            isLoading={isLoading}
-            onDelete={handleDelete}
-          />
-        </div>
-      </div>
+          {visible.length ? (
+            <PipelineTable applications={visible} now={now} />
+          ) : (
+            <p className="px-6 py-12 text-center text-muted">
+              {q
+                ? `No applications match “${query}”.`
+                : filter === "follow-up"
+                  ? "Nothing needs a follow-up. Applications that go quiet for 10 days appear here."
+                  : "No applications in this stage yet."}
+            </p>
+          )}
+        </Panel>
+      )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <PipelinePage />
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
     applied: "Applied",
-    "in-progress": "In Progress",
+    "in-progress": "In progress",
     offer: "Offer",
     rejected: "Rejected",
 };
@@ -35,7 +35,7 @@ const linkSchema = z.union([
 
 const fields = {
     company: z.string().trim().min(1, "Company is required").max(200),
-    position: z.string().trim().min(1, "Position is required").max(200),
+    position: z.string().trim().min(1, "Role is required").max(200),
     status: statusSchema,
     link: z.string().trim().pipe(linkSchema),
     notes: z.string().max(5000),

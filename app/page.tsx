@@ -1,111 +1,68 @@
-"use client";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { ArrowRight } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { Scope } from "@/components/scope";
+import { Button } from "@/components/ui/button";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
-import { motion } from "framer-motion";
-import { WavyBackground } from "@/components/ui/wavy-background";
-import { RainbowButton } from "@/components/ui/rainbow-button";
-import ShimmerButton from "@/components/ui/shimmer-button";
-import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+const steps = [
+  "Connect GitHub — your skills, read from your code",
+  "Track every application from first send to offer",
+  "Know which ones have gone quiet and when to follow up",
+];
 
-function getGreeting(hour: number) {
-  if (hour >= 5 && hour < 12) return "Good Morning";
-  if (hour >= 12 && hour < 17) return "Good Afternoon";
-  if (hour >= 17 && hour < 22) return "Good Evening";
-  return "Night Owl";
-}
-
-export default function LandingPage() {
-  const router = useRouter();
-  const { isLoaded, userId } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (isLoaded && userId) {
-      router.push("/dashboard");
-    }
-  }, [isLoaded, userId, router]);
-
-  const handleNavigation = async (path: string) => {
-    setIsLoading(true);
-    router.push(path);
-  };
-
-  if (!isLoaded) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col items-center gap-6"
-        >
-          <LoadingSpinner size="lg" />
-          <p className="text-lg text-muted-foreground animate-pulse">
-            Loading your experience...
-          </p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Only reached on the client after Clerk loads (the server renders the
-  // spinner above), so reading the local time here can't cause a mismatch.
-  const greeting = getGreeting(new Date().getHours());
+export default async function LandingPage() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
 
   return (
-    <WavyBackground className="h-screen" waveOpacity={0.3}>
-    <div className="h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-        className="text-center space-y-8"
-      >
-        <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-400 to-white bg-clip-text text-transparent animate-gradient bg-300%">
-          {greeting}!
-        </h1>
+    <div className="flex min-h-dvh flex-col bg-[radial-gradient(ellipse_60%_70%_at_72%_50%,var(--panel)_0%,var(--ground)_70%)]">
+      <header className="flex items-center gap-6 px-6 py-5 sm:px-12">
+        <Logo />
+        <nav aria-label="Account" className="ml-auto flex items-center gap-2">
+          <Button asChild variant="ghost">
+            <Link href="/sign-in">Sign in</Link>
+          </Button>
+        </nav>
+      </header>
 
-        <TextGenerateEffect 
-          className="text-xl md:text-2xl text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed" 
-          duration={3} 
-          filter={true} 
-          words="Welcome to DevRadar, your personal development journey tracker." 
-        />
-        
-        <div className="flex gap-4 justify-center mt-8">
-          <RainbowButton 
-            className="font-semibold" 
-            onClick={() => handleNavigation("/sign-up")}
-            disabled={isLoading}
-          >
-            {isLoading ? "Please wait..." : "Get Started"}
-          </RainbowButton>
-          
-          <ShimmerButton 
-            className="font-semibold" 
-            onClick={() => handleNavigation("/sign-in")}
-            disabled={isLoading}
-          >
-            {isLoading ? "Please wait..." : "Sign In"}
-          </ShimmerButton>
+      <main className="mx-auto flex w-full max-w-[1360px] flex-1 flex-wrap items-center gap-12 px-6 py-10 sm:px-12">
+        <section className="flex min-w-0 max-w-[560px] flex-[1_1_440px] flex-col gap-6">
+          <span className="label-mono text-signal">Skill radar for developers</span>
+          <h1 className="text-5xl font-semibold leading-[1.02] tracking-[-0.04em] sm:text-6xl">
+            See your skills the way a hiring manager will.
+          </h1>
+          <p className="max-w-[500px] text-lg text-muted">
+            DevRadar maps your skills from the code you’ve shipped, tracks every application you send, and tells you when it’s
+            time to follow up.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/sign-up">
+                Get started
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/sign-in">I have an account</Link>
+            </Button>
+          </div>
+        </section>
+        <div className="flex min-w-0 flex-[1_1_380px] justify-center">
+          <Scope className="max-w-[540px]" />
         </div>
-      </motion.div>
+      </main>
 
-      {/* Credits Section */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 0.5 }}
-        className="absolute bottom-4 text-center text-sm text-muted-foreground"
-      >
-        <p>
-          Made with ❤️ by <a href="https://github.com/armstain" className="text-foreground font-semibold">Adnan</a>
-        </p>
-      </motion.div>
+      <footer className="border-t border-line">
+        <ol className="mx-auto flex max-w-[1360px] flex-wrap gap-x-10 gap-y-3 px-6 py-5 text-sm text-muted sm:px-12">
+          {steps.map((step, i) => (
+            <li key={step}>
+              <span className="font-mono text-signal">{String(i + 1).padStart(2, "0")}</span> {step}
+            </li>
+          ))}
+        </ol>
+      </footer>
     </div>
-    </WavyBackground>
   );
-} 
+}
