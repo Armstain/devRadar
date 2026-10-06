@@ -18,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import axios from 'axios';
 import { useQueryClient } from "@tanstack/react-query";
@@ -63,6 +63,8 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
       notes: application?.notes || "",
     },
   });
+
+  const status = useWatch({ control: form.control, name: "status" });
 
   const onSubmit = async (data: ApplicationFormValues) => {
     try {
@@ -155,7 +157,7 @@ export function ApplicationDialog({ application }: ApplicationDialogProps) {
           <div className="grid gap-2">
             <label htmlFor="status">Status</label>
             <Select
-              value={form.watch("status")}
+              value={status}
               onValueChange={(value) => form.setValue("status", value as ApplicationStatus)}
             >
               <SelectTrigger>

@@ -39,7 +39,7 @@ export default function RootLayout({
     <ClerkProvider 
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       appearance={{
-        layout: {
+        options: {
           socialButtonsPlacement: "bottom",
           socialButtonsVariant: "iconButton",
         },

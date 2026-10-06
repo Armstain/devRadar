@@ -10,19 +10,19 @@ import ShimmerButton from "@/components/ui/shimmer-button";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
+function getGreeting(hour: number) {
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 22) return "Good Evening";
+  return "Night Owl";
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const { isLoaded, userId } = useAuth();
-  const [greeting, setGreeting] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) setGreeting("Good Morning");
-    else if (hour >= 12 && hour < 17) setGreeting("Good Afternoon");
-    else if (hour >= 17 && hour < 22) setGreeting("Good Evening");
-    else setGreeting("Night Owl");
-
     if (isLoaded && userId) {
       router.push("/dashboard");
     }
@@ -50,7 +50,10 @@ export default function LandingPage() {
       </div>
     );
   }
-  
+
+  // Only reached on the client after Clerk loads (the server renders the
+  // spinner above), so reading the local time here can't cause a mismatch.
+  const greeting = getGreeting(new Date().getHours());
 
   return (
     <WavyBackground className="h-screen" waveOpacity={0.3}>

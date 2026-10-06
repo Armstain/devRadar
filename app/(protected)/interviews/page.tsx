@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 
-import Particles from '@/components/ui/particles';
-import { useTheme } from 'next-themes';
 import ShinyButton from '@/components/ui/shiny-button';
 
 export default function AIQuestionGenerator() {
@@ -23,12 +21,6 @@ export default function AIQuestionGenerator() {
     const [difficulty, setDifficulty] = useState('intermediate');
     const [count, setCount] = useState(5);
     const [response, setResponse] = useState('');
-    const { resolvedTheme } = useTheme();
-  const [color, setColor] = useState("#ffffff");
- 
-  useEffect(() => {
-    setColor(resolvedTheme === "dark" ? "#ffffff" : "#000000");
-  }, [resolvedTheme]);
 
     
 
@@ -137,11 +129,6 @@ export default function AIQuestionGenerator() {
                         </ReactMarkdown>
                     </div>
                 )}
-                <Particles className="absolute inset-0"
-        quantity={100}
-        ease={80}
-        color={color}
-        refresh />
             </div>
             
        

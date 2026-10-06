@@ -2,7 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useSyncExternalStore } from "react";
+
+const noopSubscribe = () => () => {};
 import { createNoise3D } from "simplex-noise";
 
 function WavyBackground({
@@ -101,15 +103,13 @@ function WavyBackground({
     };
   }, []);
 
-  const [isSafari, setIsSafari] = useState(false);
-  useEffect(() => {
-    // I'm sorry but i have got to support it on safari.
-    setIsSafari(
-      typeof window !== "undefined" &&
-        navigator.userAgent.includes("Safari") &&
-        !navigator.userAgent.includes("Chrome")
-    );
-  }, []);
+  // Safari doesn't support the canvas `filter` context property, so blur the
+  // element with CSS instead. The server snapshot is false (no user agent).
+  const isSafari = useSyncExternalStore(
+    noopSubscribe,
+    () => navigator.userAgent.includes("Safari") && !navigator.userAgent.includes("Chrome"),
+    () => false
+  );
 
   return (
     <div

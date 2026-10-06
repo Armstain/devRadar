@@ -40,7 +40,6 @@ export default function GitHubActivityPage() {
   });
 
   // Fetch GitHub data only if connected
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: githubData, isLoading, error } = useQuery({
     queryKey: ['github-data'],
     queryFn: async () => {
