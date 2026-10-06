@@ -7,45 +7,16 @@ import BlurFade from "@/components/ui/blur-fade";
 import { GitHubLoginButton } from "@/components/github-login-button";
 import { LinkedInLoginButton } from "@/components/linkedin-login-button";
 import { Briefcase, Github, LinkedinIcon, Users } from "lucide-react";
-import DashboardCharts from "@/components/dashboard-charts";
+import DashboardCharts, { type DashboardStats } from "@/components/dashboard-charts";
+import { normalizeStatus, type ApplicationStatus } from "@/lib/applications";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import NumberTicker from "@/components/ui/number-ticker";
-
-interface DashboardStats {
-  applications: {
-    total: number;
-    applied: number;
-    interviewing: number;
-    offered: number;
-    rejected: number;
-  };
-  github?: {
-    connected: boolean;
-    publicRepos?: number;
-    followers?: number;
-    following?: number;
-    languages?: Array<{
-      language: string;
-      percentage: number;
-    }>;
-    contributions?: {
-      currentStreak: number;
-      totalContributions: number;
-      averagePerDay: number;
-    };
-  };
-  linkedin?: {
-    connected: boolean;
-    connections?: number;
-    posts?: number;
-  };
-}
 
 export default function DashboardPage() {
   
   const { data: applications, isLoading: isLoadingApps } = useQuery({
     queryKey: ['applications'],
-    queryFn: () => axios.get('/api/applications').then(res => res.data),
+    queryFn: () => axios.get<{ status: string }[]>('/api/applications').then(res => res.data),
   });
 
   const { data: githubData, isLoading: isLoadingGithub } = useQuery({
@@ -63,8 +34,8 @@ export default function DashboardPage() {
           languages: languagesResponse.data.languages,
           contributions: contributionsResponse.data,
         };
-      } catch (error) {
-        console.error('GitHub data fetch error:', error);
+      } catch {
+        // Not connected (or GitHub is unavailable): show the connect button
         return null;
       }
     },
@@ -80,20 +51,17 @@ export default function DashboardPage() {
   // Combine loading states
   const isLoading = isLoadingApps || isLoadingGithub || isLoadingLinkedin;
 
+  const countStatus = (status: ApplicationStatus) =>
+    applications?.filter(app => normalizeStatus(app.status) === status).length ?? 0;
+
   // Transform data for stats
   const stats: DashboardStats = {
-    applications: applications ? {
-      total: applications.length,
-      applied: applications.filter(app => app.status === 'applied').length,
-      interviewing: applications.filter(app => app.status === 'interviewing').length,
-      offered: applications.filter(app => app.status === 'offered').length,
-      rejected: applications.filter(app => app.status === 'rejected').length,
-    } : {
-      total: 0,
-      applied: 0,
-      interviewing: 0,
-      offered: 0,
-      rejected: 0,
+    applications: {
+      total: applications?.length ?? 0,
+      applied: countStatus('applied'),
+      interviewing: countStatus('in-progress'),
+      offered: countStatus('offer'),
+      rejected: countStatus('rejected'),
     },
     github: githubData ? {
       connected: true,

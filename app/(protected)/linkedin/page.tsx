@@ -22,7 +22,6 @@ export default function LinkedInActivityPage() {
     queryFn: async () => {
       try {
         const response = await axios.get('/api/linkedin/user');
-        console.log('LinkedIn data:', response.data);
         setIsLinkedInConnected(true);
         return response.data;
       } catch (error) {
@@ -44,7 +43,7 @@ export default function LinkedInActivityPage() {
         // Clear the text area
         setPostText('');
         // Refresh the posts list
-        queryClient.invalidateQueries(['linkedin-user']);
+        queryClient.invalidateQueries({ queryKey: ['linkedin-user'] });
         // Show success message
         toast.success('Post created successfully!');
       }

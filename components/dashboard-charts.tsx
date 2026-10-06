@@ -1,7 +1,5 @@
 import React from 'react';
 import {
- 
- 
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,15 +7,58 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  
   Cell,
-
- 
+  type TooltipProps,
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import BlurFade from '@/components/ui/blur-fade';
 
-const DashboardCharts = ({ stats }) => {
+export interface DashboardStats {
+  applications: {
+    total: number;
+    applied: number;
+    interviewing: number;
+    offered: number;
+    rejected: number;
+  };
+  github?: {
+    connected: boolean;
+    publicRepos?: number;
+    followers?: number;
+    following?: number;
+    languages?: Array<{
+      language: string;
+      percentage: number;
+    }>;
+    contributions?: {
+      currentStreak: number;
+      totalContributions: number;
+      averagePerDay: number;
+    };
+  };
+  linkedin?: {
+    connected: boolean;
+    connections?: number;
+    posts?: number;
+  };
+}
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border">
+        <p className="font-medium">{label}</p>
+        <p className="text-sm text-gray-600">
+          Count: {payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const DashboardCharts = ({ stats }: { stats: DashboardStats }) => {
   // Transform application stats for the bar chart
   const statusData = [
     {
@@ -42,21 +83,6 @@ const DashboardCharts = ({ stats }) => {
     },
     
   ];
-
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border">
-          <p className="font-medium">{label}</p>
-          <p className="text-sm text-gray-600">
-            Count: {payload[0].value}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // GitHub activity data
   // const languagesData = stats?.github?.languages?.map((lang: any) => ({
