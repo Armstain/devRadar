@@ -16,7 +16,7 @@ export function isoWeek(date: Date): number {
 
 // Fixed names rather than toLocaleDateString: locale data differs between
 // Node and browsers (e.g. "Sep" vs "Sept"), which would break hydration.
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // "Tue 06 Oct · Week 41"
@@ -44,4 +44,14 @@ export function plural(count: number, one: string, many = `${one}s`): string {
 // languages stay visible. Labels always show the real percentage.
 export function radarScale(share: number, max: number): number {
     return max > 0 ? Math.sqrt(share / max) : 0;
+}
+
+// "just now", "12 min ago", "3 h ago", "5 d ago", then a date
+export function timeAgo(value: string | Date, now: Date = new Date()): string {
+    const seconds = Math.max(0, (now.getTime() - new Date(value).getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+    if (seconds < 86_400) return `${Math.floor(seconds / 3600)} h ago`;
+    if (seconds < 30 * 86_400) return `${Math.floor(seconds / 86_400)} d ago`;
+    return shortDate(value);
 }

@@ -1,211 +1,181 @@
 "use client";
 
-import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Github, Star } from "lucide-react";
-import { ActivityCard } from "@/components/dashboard/activity-card";
-import { RadarChart } from "@/components/radar-chart";
+import Link from "next/link";
+import { AlertTriangle, Github, Globe, RefreshCw } from "lucide-react";
+import { Scanning } from "@/components/skills/scanning";
+import { SkillProfileView } from "@/components/skills/skill-profile-view";
 import { Scope } from "@/components/scope";
 import { Button } from "@/components/ui/button";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMe } from "@/hooks/use-applications";
-import { useGithubLanguages } from "@/hooks/use-github";
-import { radarScale, shortDate } from "@/lib/format";
-
-interface GithubUser {
-  login: string;
-  name: string | null;
-  avatar_url: string;
-  html_url: string;
-  bio: string | null;
-  public_repos: number;
-  followers: number;
-}
-
-interface Repo {
-  id: number;
-  name: string;
-  html_url: string;
-  description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  fork: boolean;
-  pushed_at: string;
-}
-
-const STALE = 10 * 60 * 1000;
+import { syncInProgress, useGithubProfile, useSyncGithub, type GithubProfileState } from "@/hooks/use-github";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { timeAgo } from "@/lib/format";
 
 export default function SkillProfilePage() {
-  const { data: me, isLoading: loadingMe } = useMe();
-  const connected = Boolean(me?.github.connected);
+  const { data: state, isLoading, isError, refetch } = useGithubProfile();
 
-  const user = useQuery({
-    queryKey: ["github", "user"],
-    enabled: connected,
-    staleTime: STALE,
-    queryFn: async () => (await axios.get<GithubUser>("/api/github/user")).data,
-  });
-  const repos = useQuery({
-    queryKey: ["github", "repos"],
-    enabled: connected,
-    staleTime: STALE,
-    queryFn: async () => (await axios.get<Repo[]>("/api/github/repos")).data,
-  });
-  const languages = useGithubLanguages(connected);
-
-  if (loadingMe) {
-    return <Skeleton className="h-96 rounded-xl" />;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading your skill profile">
+        <Skeleton className="h-40 rounded-xl" />
+        <div className="grid gap-6 lg:grid-cols-12">
+          <Skeleton className="h-96 rounded-xl lg:col-span-5" />
+          <Skeleton className="h-96 rounded-xl lg:col-span-7" />
+        </div>
+      </div>
+    );
   }
 
-  if (!connected) {
+  if (isError || !state) {
+    return (
+      <Panel>
+        <div className="flex flex-col items-start gap-3 p-8">
+          <p className="font-medium">Couldn’t load your skill profile.</p>
+          <Button variant="secondary" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (!state.connected) return <ConnectPrompt />;
+
+  if (!state.profile) {
     return (
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-semibold tracking-tight">Skill profile</h1>
         <Panel>
-          <div className="grid items-center gap-10 p-8 md:grid-cols-[minmax(0,1fr)_260px] md:p-12">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-2xl font-semibold tracking-tight">Your skills, read from your code.</h2>
-              <p className="max-w-lg text-muted">
-                Connect GitHub and DevRadar reads your repositories to map the languages you actually ship in. Nothing is
-                posted on your behalf.
-              </p>
-              <Button asChild size="lg" className="w-fit">
-                <a href="/api/auth/github">
-                  <Github aria-hidden="true" />
-                  Connect GitHub
-                </a>
-              </Button>
-            </div>
-            <Scope className="mx-auto max-w-[260px]" />
-          </div>
+          {state.status === "failed" ? (
+            <SyncFailed state={state} />
+          ) : syncInProgress(state) ? (
+            <Scanning
+              title={`Reading @${state.username}’s code`}
+              subtitle="The first sync takes under a minute. You can leave this page; it runs in the background."
+            />
+          ) : (
+            <FirstSync />
+          )}
         </Panel>
       </div>
     );
   }
 
-  const top = languages.data?.slice(0, 6) ?? [];
-  const max = Math.max(1, ...top.map((l) => l.percentage));
-  const ownRepos = (repos.data ?? [])
-    .filter((r) => !r.fork)
-    .sort((a, b) => new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime())
-    .slice(0, 8);
+  return (
+    <SkillProfileView
+      profile={state.profile}
+      actions={<ProfileActions state={state} />}
+      notice={state.status === "failed" && state.error ? <FailureBanner message={state.error} /> : null}
+    />
+  );
+}
+
+function ProfileActions({ state }: { state: GithubProfileState }) {
+  const sync = useSyncGithub();
+  const hydrated = useHydrated();
+  const syncing = syncInProgress(state) || sync.isPending;
 
   return (
-    <div className="flex flex-col gap-7">
-      <header className="flex flex-wrap items-center gap-5">
-        {user.data ? (
-          // eslint-disable-next-line @next/next/no-img-element -- GitHub avatars are already sized and cached by GitHub's CDN
-          <img src={user.data.avatar_url} alt="" width={64} height={64} className="size-16 rounded-2xl" />
-        ) : (
-          <Skeleton className="size-16 rounded-2xl" />
-        )}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Skill profile</h1>
-          <p className="text-muted">
-            {user.data ? (
-              <>
-                <span className="font-mono">@{user.data.login}</span> · {user.data.public_repos} public repositories
-              </>
-            ) : (
-              "Loading your GitHub profile…"
-            )}
-          </p>
-        </div>
-        {user.data ? (
-          <Button asChild variant="secondary">
-            <a href={user.data.html_url} target="_blank" rel="noopener noreferrer">
-              View on GitHub <ExternalLink aria-hidden="true" />
-              <span className="sr-only">(opens in a new tab)</span>
+    <>
+      <span className="font-mono text-[13px] text-muted" aria-live="polite">
+        {syncing ? "Syncing…" : state.syncedAt && hydrated ? `Synced ${timeAgo(state.syncedAt)}` : null}
+      </span>
+      <Button variant="secondary" size="sm" onClick={() => sync.mutate()} disabled={syncing}>
+        <RefreshCw className={syncing ? "animate-spin" : undefined} aria-hidden="true" />
+        Sync now
+      </Button>
+      {state.username ? (
+        <Button asChild variant="secondary" size="sm">
+          <Link href={`/scan/${state.username.toLowerCase()}`}>
+            <Globe aria-hidden="true" />
+            Public view
+          </Link>
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
+function FailureBanner({ message }: { message: string }) {
+  return (
+    <div role="alert" className="flex items-start gap-3 rounded-xl border border-caution/40 bg-caution-soft px-4 py-3 text-sm">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-caution" aria-hidden="true" />
+      <p>
+        The last sync failed: {message} Showing the previous results.
+        {/reconnect/i.test(message) ? (
+          <>
+            {" "}
+            <a href="/api/auth/github" className="font-medium text-signal hover:underline">
+              Reconnect GitHub
             </a>
-          </Button>
+          </>
         ) : null}
-      </header>
+      </p>
+    </div>
+  );
+}
 
-      <div className="grid items-start gap-6 lg:grid-cols-12">
-        <Panel className="lg:col-span-7">
-          <div className="flex flex-col gap-4 p-6">
-            <PanelHeader title="Language radar" description="Share of code across your repositories" />
-            {languages.isLoading ? (
-              <Skeleton className="mx-auto aspect-[9/8] w-full max-w-[360px] rounded-full" />
-            ) : top.length >= 3 ? (
-              <RadarChart
-                axes={top.map((l) => ({ label: l.language, value: radarScale(l.percentage, max), detail: `${l.percentage}%` }))}
-                label={`Languages: ${top.map((l) => `${l.language} ${l.percentage}%`).join(", ")}`}
-              />
-            ) : (
-              <p className="text-muted">Not enough code yet to draw a radar.</p>
-            )}
-          </div>
-        </Panel>
-
-        <Panel className="lg:col-span-5">
-          <div className="flex flex-col gap-4 p-6">
-            <PanelHeader title="Breakdown" />
-            {languages.isLoading ? (
-              <Skeleton className="h-48" />
-            ) : (
-              <ul className="flex flex-col gap-3.5">
-                {top.map((l) => (
-                  <li key={l.language} className="flex flex-col gap-1.5">
-                    <span className="flex items-baseline justify-between">
-                      <span className="font-medium">{l.language}</span>
-                      <span className="font-mono text-sm text-muted">{l.percentage}%</span>
-                    </span>
-                    <span className="h-1.5 rounded-full bg-raised">
-                      <span className="block h-1.5 rounded-full bg-signal" style={{ width: `${(l.percentage / max) * 100}%` }} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </Panel>
+function SyncFailed({ state }: { state: GithubProfileState }) {
+  const sync = useSyncGithub();
+  return (
+    <div className="flex flex-col items-start gap-4 p-8">
+      <AlertTriangle className="size-6 text-caution" aria-hidden="true" />
+      <div className="flex flex-col gap-1">
+        <p className="text-lg font-semibold">The sync didn’t finish</p>
+        <p className="max-w-lg text-muted">{state.error ?? "Something went wrong while reading GitHub."}</p>
       </div>
+      <div className="flex gap-2">
+        <Button onClick={() => sync.mutate()} disabled={sync.isPending}>
+          Try again
+        </Button>
+        <Button asChild variant="secondary">
+          <a href="/api/auth/github">Reconnect GitHub</a>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-      <Panel className="overflow-hidden">
-        <div className="px-6 pb-3 pt-6">
-          <PanelHeader title="Recently active repositories" description="Your own repositories, most recent push first" />
-        </div>
-        {repos.isLoading ? (
-          <div className="flex flex-col gap-2 px-6 pb-6">
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
+function FirstSync() {
+  const sync = useSyncGithub();
+  return (
+    <div className="grid items-center gap-10 p-8 md:grid-cols-[minmax(0,1fr)_220px] md:p-12">
+      <div className="flex flex-col items-start gap-4">
+        <h2 className="text-2xl font-semibold tracking-tight">GitHub is connected. Time for a first read.</h2>
+        <p className="max-w-lg text-muted">DevRadar reads your repositories in the background and keeps the profile fresh every night.</p>
+        <Button onClick={() => sync.mutate()} disabled={sync.isPending}>
+          <RefreshCw aria-hidden="true" />
+          Read my repositories
+        </Button>
+      </div>
+      <Scope className="mx-auto max-w-[220px]" />
+    </div>
+  );
+}
+
+function ConnectPrompt() {
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="text-3xl font-semibold tracking-tight">Skill profile</h1>
+      <Panel>
+        <div className="grid items-center gap-10 p-8 md:grid-cols-[minmax(0,1fr)_260px] md:p-12">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Your skills, read from your code.</h2>
+            <p className="max-w-lg text-muted">
+              Connect GitHub and DevRadar reads the manifests, config files and languages of your repositories, including private
+              ones, to score six skill areas with the evidence behind each. Nothing is posted on your behalf.
+            </p>
+            <Button asChild size="lg" className="w-fit">
+              <a href="/api/auth/github">
+                <Github aria-hidden="true" />
+                Connect GitHub
+              </a>
+            </Button>
           </div>
-        ) : (
-          <ul>
-            {ownRepos.map((repo) => (
-              <li key={repo.id} className="border-t border-line">
-                <a
-                  href={repo.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-1 px-6 py-3.5 transition-colors hover:bg-raised/50"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate font-mono text-[15px] font-medium">{repo.name}</span>
-                    {repo.description ? <span className="truncate text-[13px] text-muted">{repo.description}</span> : null}
-                  </span>
-                  <span className="flex items-center gap-4 text-[13px] text-muted">
-                    {repo.language ? <span>{repo.language}</span> : null}
-                    {repo.stargazers_count ? (
-                      <span className="flex items-center gap-1">
-                        <Star className="size-3.5" aria-hidden="true" />
-                        <span className="sr-only">Stars:</span>
-                        {repo.stargazers_count}
-                      </span>
-                    ) : null}
-                    <span className="hidden font-mono sm:inline">{shortDate(repo.pushed_at)}</span>
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
+          <Scope className="mx-auto max-w-[260px]" />
+        </div>
       </Panel>
-
-      <ActivityCard />
     </div>
   );
 }
