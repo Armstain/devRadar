@@ -3,10 +3,11 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { ScanSearch, Search } from "lucide-react";
 import { CSVImport } from "@/components/applications/csv-import";
 import { PipelineTable } from "@/components/applications/pipeline-table";
 import { FirstRun } from "@/components/dashboard/first-run";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,7 +62,15 @@ function PipelinePage() {
           <h1 className="text-3xl font-semibold tracking-tight">Pipeline</h1>
           <p className="text-muted">{isLoading ? "Loading…" : `${plural(all.length, "application")} tracked`}</p>
         </div>
-        <CSVImport />
+        <div className="flex flex-wrap gap-2">
+          <CSVImport />
+          <Button asChild>
+            <Link href="/fit">
+              <ScanSearch aria-hidden="true" />
+              Add from job post
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {isError ? (

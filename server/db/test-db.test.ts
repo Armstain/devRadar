@@ -9,6 +9,6 @@ describe("test database", () => {
             sql`select table_name from information_schema.tables where table_schema = 'public' order by table_name`
         );
         const rows = Array.isArray(result) ? result : (result as { rows: { table_name: string }[] }).rows;
-        expect(rows.map((r) => r.table_name)).toEqual(["application_events", "applications", "github_connections", "github_scans", "github_snapshots", "users"]);
+        expect(rows.map((r) => r.table_name)).toEqual(["application_events", "applications", "github_connections", "github_scans", "github_snapshots", "job_posts", "users"]);
     });
 });

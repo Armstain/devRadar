@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Check, Clock, ExternalLink, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { DeleteApplication } from "@/components/applications/delete-application";
+import { FitCard } from "@/components/fit/fit-card";
 import { Button } from "@/components/ui/button";
 import { Monogram } from "@/components/ui/monogram";
 import { Panel, PanelHeader } from "@/components/ui/panel";
@@ -192,7 +193,7 @@ export default function ApplicationDetailPage() {
 
       <StageStepper app={app} />
 
-      <div className="grid items-start gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         <Panel className="lg:col-span-7">
           <div className="flex flex-col gap-4 p-6">
             <PanelHeader
@@ -212,6 +213,7 @@ export default function ApplicationDetailPage() {
         </Panel>
 
         <aside className="flex flex-col gap-6 lg:col-span-5">
+          {app.jobPostId ? <FitCard jobPostId={app.jobPostId} /> : null}
           <Panel className={cn(step.urgent && "border-caution/40")}>
             <div className="flex flex-col gap-2 p-6">
               <span className={cn("label-mono flex items-center gap-1.5", step.urgent && "text-caution")}>
