@@ -1,63 +1,32 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { getCollection } from "@/lib/db";
+import { errorResponse, json } from "@/server/http";
+import { authedGithub, githubFetch } from "@/server/github";
 
-export async function GET() {
-    try {
-        const user = await currentUser();
-        if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+// Note: one request per repository. Phase 2 replaces this with a background
+// sync that stores a snapshot, so page views don't call GitHub at all.
+export const GET = authedGithub("github.languages", async (_request, { github }) => {
+    const reposResponse = await githubFetch(github.token, "/user/repos?per_page=100");
+    const repos: { full_name: string; fork: boolean }[] = await reposResponse.json();
+    if (!reposResponse.ok || !Array.isArray(repos)) return errorResponse("Failed to fetch repositories", 502);
 
-        const collection = await getCollection('users');
-        const userData = await collection.findOne({ userId: user.id });
-
-        if (!userData?.githubToken) {
-            return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
-        }
-
-        // Fetch user's repositories
-        const reposResponse = await fetch("https://api.github.com/user/repos", {
-            headers: {
-                Authorization: `Bearer ${userData.githubToken}`,
-            },
-        });
-        const repos = await reposResponse.json();
-
-        // Fetch languages for each repository
-        const languageStats: { [key: string]: number } = {};
-        await Promise.all(
-            repos.map(async (repo: any) => {
-                const languagesUrl = `https://api.github.com/repos/${repo.full_name}/languages`;
-                const languagesResponse = await fetch(languagesUrl, {
-                    headers: {
-                        Authorization: `Bearer ${userData.githubToken}`,
-                    },
-                });
-                const languages = await languagesResponse.json();
-
-                // Sum up bytes of code for each language
-                Object.entries(languages).forEach(([language, bytes]: [string, any]) => {
-                    languageStats[language] = (languageStats[language] || 0) + bytes;
-                });
+    const totals: Record<string, number> = {};
+    await Promise.all(
+        repos
+            .filter((repo) => !repo.fork)
+            .map(async (repo) => {
+                const response = await githubFetch(github.token, `/repos/${repo.full_name}/languages`);
+                if (!response.ok) return;
+                const languages: Record<string, number> = await response.json();
+                for (const [language, bytes] of Object.entries(languages)) {
+                    totals[language] = (totals[language] ?? 0) + bytes;
+                }
             })
-        );
+    );
 
-        // Convert bytes to percentages and sort
-        const total = Object.values(languageStats).reduce((a, b) => a + b, 0);
-        const languagesPercentage = Object.entries(languageStats)
-            .map(([language, bytes]) => ({
-                language,
-                percentage: Math.round((bytes / total) * 100),
-                bytes
-            }))
-            .sort((a, b) => b.bytes - a.bytes)
-            .slice(0, 5); // Top 5 languages
+    const total = Object.values(totals).reduce((a, b) => a + b, 0);
+    const languages = Object.entries(totals)
+        .map(([language, bytes]) => ({ language, bytes, percentage: total ? Math.round((bytes / total) * 100) : 0 }))
+        .sort((a, b) => b.bytes - a.bytes)
+        .slice(0, 6);
 
-        return NextResponse.json({ languages: languagesPercentage });
-    } catch (error) {
-        console.error("Language stats error:", error);
-        return NextResponse.json({ error: "Failed to fetch language statistics" }, { status: 500 });
-    }
-} 
+    return json({ languages });
+});

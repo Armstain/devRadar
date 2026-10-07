@@ -1,33 +1,37 @@
-import type { Metadata } from "next";
-import {
-  ClerkProvider,
-  
-} from '@clerk/nextjs'
+import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from 'react-hot-toast';
 import QueryProvider from "./providers/query-client-provider";
-import { Manrope, Space_Mono } from 'next/font/google'
 
+const grotesk = Schibsted_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-grotesk",
+  display: "swap",
+});
 
-const manrope = Manrope({ 
-  subsets: ['latin'],
-  variable: '--font-manrope',
-})
-
-// Secondary font for body text
-
-
-// Monospace font for code snippets
-const spaceMono = Space_Mono({
-  weight: ['400', '700'],
-  subsets: ['latin'],
-  variable: '--font-space-mono',
-})
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "DevRadar",
-  description: "",
+  title: {
+    default: "DevRadar — your skills, the way a hiring manager sees them",
+    template: "%s · DevRadar",
+  },
+  description:
+    "Scan your GitHub to map your skills, see how you fit each job, and track every application to the offer.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a0d0b" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f2" },
+  ],
 };
 
 export default function RootLayout({
@@ -36,30 +40,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider 
+    <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       appearance={{
-        layout: {
+        options: {
           socialButtonsPlacement: "bottom",
           socialButtonsVariant: "iconButton",
         },
       }}
     >
-      <html suppressHydrationWarning lang="en" className="dark">
-        <body
-          className={`${manrope.variable}  ${spaceMono.variable} antialiased`}
-        >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <QueryProvider>
-              {children}
-            </QueryProvider>
+      <html suppressHydrationWarning lang="en" className={`${grotesk.variable} ${mono.variable}`}>
+        <body>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <QueryProvider>{children}</QueryProvider>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "var(--panel)",
+                  color: "var(--ink)",
+                  border: "1px solid var(--line)",
+                  boxShadow: "var(--shadow-overlay)",
+                  borderRadius: 12,
+                  fontSize: 14,
+                },
+                success: { iconTheme: { primary: "var(--signal)", secondary: "var(--signal-ink)" } },
+                error: { iconTheme: { primary: "var(--danger)", secondary: "var(--panel)" } },
+              }}
+            />
           </ThemeProvider>
-          <Toaster position="bottom-right" />
         </body>
       </html>
     </ClerkProvider>

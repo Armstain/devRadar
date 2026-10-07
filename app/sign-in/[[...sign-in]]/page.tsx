@@ -1,7 +1,8 @@
-import { SignIn } from '@clerk/nextjs'
+import type { Metadata } from "next";
+import { AuthFrame } from "@/components/auth-frame";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 export default function Page() {
-  return <div className="h-screen w-full bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-    <SignIn />
-  </div>
+  return <AuthFrame mode="sign-in" />;
 }
