@@ -1,4 +1,4 @@
-import { CalendarClock, Clock, Hexagon, MessageSquareText, SquareKanban, Trophy, type LucideIcon } from "lucide-react";
+import { CalendarClock, Clock, Hexagon, MessageSquareText, ScanSearch, SquareKanban, Trophy, type LucideIcon } from "lucide-react";
 import { LogoMarkIcon } from "@/components/app-shell/radar-icon";
 import type { PipelineView } from "@/lib/pipeline";
 
@@ -12,6 +12,7 @@ export interface NavItem {
 export const workspaceNav: NavItem[] = [
   { label: "Radar", href: "/dashboard", icon: LogoMarkIcon, match: (p) => p === "/dashboard" },
   { label: "Pipeline", href: "/applications", icon: SquareKanban, match: (p) => p.startsWith("/applications") },
+  { label: "Job fit", href: "/fit", icon: ScanSearch, match: (p) => p.startsWith("/fit") },
   { label: "Skill profile", href: "/github", icon: Hexagon, match: (p) => p.startsWith("/github") },
   { label: "Interview prep", href: "/interviews", icon: MessageSquareText, match: (p) => p.startsWith("/interviews") },
 ];

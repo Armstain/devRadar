@@ -78,4 +78,6 @@ export interface ApplicationEvent {
 
 export interface ApplicationWithEvents extends Application {
     events: ApplicationEvent[];
+    // The analysed job post it was created from, if any
+    jobPostId: string | null;
 }

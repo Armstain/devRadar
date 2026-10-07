@@ -16,7 +16,9 @@ export function AreaRadar({
     label: a.label,
     value: a.score / 100,
     detail: String(a.score),
-    ...(targets ? { target: (targets[a.id] ?? 0) / 100 } : {}),
+    // A small floor keeps the dashed shape a shape: an area the role doesn't
+    // mention sits near the centre instead of collapsing onto it
+    ...(targets ? { target: Math.max(0.08, (targets[a.id] ?? 0) / 100) } : {}),
   }))
   return (
     <RadarChart

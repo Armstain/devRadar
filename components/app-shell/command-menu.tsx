@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { CornerDownLeft, Plus, Search } from "lucide-react";
+import { CornerDownLeft, Plus, ScanSearch, Search } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { Monogram } from "@/components/ui/monogram";
 import { pipelineViews, workspaceNav } from "@/components/app-shell/nav";
@@ -45,6 +45,14 @@ export function CommandMenu({ open, onOpenChange, onAddApplication }: CommandMen
         icon: <Plus className="size-4" aria-hidden="true" />,
         keywords: "new create",
         run: onAddApplication,
+      },
+      {
+        id: "analyse",
+        group: "Actions",
+        label: "Analyse a job post",
+        icon: <ScanSearch className="size-4" aria-hidden="true" />,
+        keywords: "fit score paste requirements",
+        run: go("/fit"),
       },
       ...workspaceNav.map((item) => ({
         id: `nav-${item.href}`,

@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { APPLICATION_STATUSES } from "@/lib/applications";
+import type { JobExtraction } from "@/lib/job-posts";
 import type { GithubSnapshot } from "@/lib/skills/types";
 
 const timestamps = {
@@ -96,6 +97,32 @@ export const applicationEvents = pgTable(
     (t) => [index("application_events_application_idx").on(t.applicationId, t.createdAt)]
 );
 
+// A pasted job post and what the model extracted from it. The fit score
+// isn't stored: it's computed from the extraction and the current skill
+// profile on every read, so it follows the profile as it changes.
+export const jobPosts = pgTable(
+    "job_posts",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        // Set once the post is saved to the pipeline
+        applicationId: uuid("application_id")
+            .unique()
+            .references(() => applications.id, { onDelete: "set null" }),
+        url: text("url").notNull().default(""),
+        text: text("text").notNull(),
+        extraction: jsonb("extraction").$type<JobExtraction>().notNull(),
+        model: text("model").notNull(),
+        // Generated interview prep for this role (markdown), kept so it isn't
+        // regenerated on every visit
+        prep: text("prep"),
+        createdAt: timestamps.createdAt,
+    },
+    (t) => [index("job_posts_user_created_idx").on(t.userId, t.createdAt.desc())]
+);
+
 export const applicationsRelations = relations(applications, ({ many }) => ({
     events: many(applicationEvents),
 }));
@@ -106,4 +133,5 @@ export const applicationEventsRelations = relations(applicationEvents, ({ one })
 
 export type ApplicationRow = typeof applications.$inferSelect;
 export type ApplicationEventRow = typeof applicationEvents.$inferSelect;
+export type JobPostRow = typeof jobPosts.$inferSelect;
 export type GithubSnapshotRow = typeof githubSnapshots.$inferSelect;

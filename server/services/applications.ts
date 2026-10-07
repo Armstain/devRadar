@@ -1,6 +1,6 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Database } from "@/server/db/client";
-import { applicationEvents, applications, type ApplicationEventRow, type ApplicationRow } from "@/server/db/schema";
+import { applicationEvents, applications, jobPosts, type ApplicationEventRow, type ApplicationRow } from "@/server/db/schema";
 import { ensureUser } from "@/server/services/users";
 import type {
     Application,
@@ -55,7 +55,8 @@ export async function getApplication(db: Database, userId: string, id: string): 
         .from(applicationEvents)
         .where(eq(applicationEvents.applicationId, id))
         .orderBy(asc(applicationEvents.createdAt));
-    return { ...toApplication(row), events: events.map(toEvent) };
+    const [jobPost] = await db.select({ id: jobPosts.id }).from(jobPosts).where(eq(jobPosts.applicationId, id));
+    return { ...toApplication(row), events: events.map(toEvent), jobPostId: jobPost?.id ?? null };
 }
 
 export async function createApplications(db: Database, userId: string, inputs: ApplicationInput[]): Promise<Application[]> {
