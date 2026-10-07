@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowRight } from "lucide-react";
+import { ScanForm } from "@/components/landing/scan-form";
 import { Logo } from "@/components/logo";
 import { Scope } from "@/components/scope";
 import { Button } from "@/components/ui/button";
 
 const steps = [
-  "Connect GitHub — your skills, read from your code",
+  "Scan — six skill areas scored from your code, with the evidence",
   "Track every application from first send to offer",
   "Know which ones have gone quiet and when to follow up",
 ];
@@ -24,6 +24,9 @@ export default async function LandingPage() {
           <Button asChild variant="ghost">
             <Link href="/sign-in">Sign in</Link>
           </Button>
+          <Button asChild variant="secondary" className="hidden sm:inline-flex">
+            <Link href="/sign-up">Get started</Link>
+          </Button>
         </nav>
       </header>
 
@@ -34,19 +37,18 @@ export default async function LandingPage() {
             See your skills the way a hiring manager will.
           </h1>
           <p className="max-w-[500px] text-lg text-muted">
-            DevRadar maps your skills from the code you’ve shipped, tracks every application you send, and tells you when it’s
-            time to follow up.
+            DevRadar reads the manifests, config files and languages in your repositories, scores what you can actually do, and
+            tracks every application you send.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
-              <Link href="/sign-up">
-                Get started
-                <ArrowRight aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/sign-in">I have an account</Link>
-            </Button>
+          <div className="flex flex-col gap-3">
+            <ScanForm className="max-w-[500px]" />
+            <p className="text-sm text-muted">
+              Try it on any GitHub username. No sign-up, public repositories only.{" "}
+              <Link href="/sign-up" className="font-medium text-signal hover:underline">
+                Create an account
+              </Link>{" "}
+              to include private ones.
+            </p>
           </div>
         </section>
         <div className="flex min-w-0 flex-[1_1_380px] justify-center">

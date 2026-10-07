@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
-import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { APPLICATION_STATUSES } from "@/lib/applications";
+import type { GithubSnapshot } from "@/lib/skills/types";
 
 const timestamps = {
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -28,6 +29,35 @@ export const githubConnections = pgTable("github_connections", {
     scopes: text("scopes").notNull().default(""),
     ...timestamps,
 });
+
+export const githubSyncStatus = pgEnum("github_sync_status", ["queued", "syncing", "ready", "failed"]);
+
+// The latest GitHub sync for a connected account. Page views read this row
+// and never call GitHub; a background job refreshes it. Disconnecting GitHub
+// deletes it, since it may include private repositories.
+export const githubSnapshots = pgTable("github_snapshots", {
+    userId: text("user_id")
+        .primaryKey()
+        .references(() => githubConnections.userId, { onDelete: "cascade" }),
+    status: githubSyncStatus("status").notNull().default("queued"),
+    data: jsonb("data").$type<GithubSnapshot>(),
+    error: text("error"),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
+    ...timestamps,
+});
+
+// Public-repository scans of any GitHub username (the landing page), cached
+// so repeat visits and shared links don't spend GitHub rate limit.
+export const githubScans = pgTable(
+    "github_scans",
+    {
+        // Lowercase GitHub login
+        login: text("login").primaryKey(),
+        data: jsonb("data").$type<GithubSnapshot>().notNull(),
+        scannedAt: timestamp("scanned_at", { withTimezone: true }).notNull().defaultNow(),
+    },
+    (t) => [index("github_scans_scanned_idx").on(t.scannedAt)]
+);
 
 export const applications = pgTable(
     "applications",
@@ -76,3 +106,4 @@ export const applicationEventsRelations = relations(applicationEvents, ({ one })
 
 export type ApplicationRow = typeof applications.$inferSelect;
 export type ApplicationEventRow = typeof applicationEvents.$inferSelect;
+export type GithubSnapshotRow = typeof githubSnapshots.$inferSelect;

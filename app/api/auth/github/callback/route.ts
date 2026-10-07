@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { consumeOAuthState, getCallbackUrl } from "@/lib/oauth";
 import { getDb } from "@/server/db/client";
+import { githubSyncRequested, inngest } from "@/server/jobs/client";
 import { logger } from "@/server/logger";
 import { saveGithubConnection } from "@/server/services/github-connections";
+import { markSyncQueued } from "@/server/services/github-snapshots";
 
 export async function GET(request: Request) {
     try {
@@ -58,13 +60,23 @@ export async function GET(request: Request) {
         }
 
         const githubUser = await userResponse.json();
-        await saveGithubConnection(getDb(), userId, {
+        const db = getDb();
+        await saveGithubConnection(db, userId, {
             token: data.access_token,
             username: githubUser.login,
             scopes: typeof data.scope === "string" ? data.scope : "",
         });
 
-        return NextResponse.redirect(new URL('/dashboard?github=connected', request.url));
+        // First sync in the background; the profile page shows its progress.
+        // A failure to queue isn't fatal: the nightly refresh picks it up.
+        await markSyncQueued(db, userId, { reset: true });
+        try {
+            await inngest.send(githubSyncRequested.create({ userId, reason: "connected" }));
+        } catch (error) {
+            logger.error({ err: error }, "couldn't queue the first GitHub sync");
+        }
+
+        return NextResponse.redirect(new URL('/github?connected=1', request.url));
 
     } catch (error) {
         logger.error({ err: error }, "GitHub OAuth callback failed");

@@ -9,3 +9,10 @@ export const inngest = new Inngest({ id: "devradar" });
 export const userDeleted = eventType("devradar/user.deleted", {
     schema: z.object({ userId: z.string().min(1) }),
 });
+
+export const githubSyncRequested = eventType("devradar/github.sync.requested", {
+    schema: z.object({
+        userId: z.string().min(1),
+        reason: z.enum(["connected", "manual", "scheduled"]),
+    }),
+});

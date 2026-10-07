@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateLine, greeting, isoWeek, plural, radarScale, shortDate } from "./format";
+import { dateLine, greeting, isoWeek, plural, radarScale, shortDate, timeAgo } from "./format";
 
 describe("greeting", () => {
     it("follows the time of day", () => {
@@ -45,5 +45,16 @@ describe("radarScale", () => {
         expect(radarScale(4, 58)).toBeCloseTo(0.263, 2);
         expect(radarScale(14, 58)).toBeGreaterThan(radarScale(4, 58));
         expect(radarScale(1, 0)).toBe(0);
+    });
+});
+
+describe("timeAgo", () => {
+    it("rounds down to the largest sensible unit", () => {
+        const now = new Date("2026-10-07T12:00:00Z");
+        expect(timeAgo("2026-10-07T11:59:30Z", now)).toBe("just now");
+        expect(timeAgo("2026-10-07T11:48:00Z", now)).toBe("12 min ago");
+        expect(timeAgo("2026-10-07T08:30:00Z", now)).toBe("3 h ago");
+        expect(timeAgo("2026-10-02T12:00:00Z", now)).toBe("5 d ago");
+        expect(timeAgo("2026-07-01T12:00:00Z", now)).toBe("1 Jul");
     });
 });

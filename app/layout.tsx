@@ -19,6 +19,8 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  // Absolute URLs for social images (e.g. a shared /scan link)
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
     default: "DevRadar — your skills, the way a hiring manager sees them",
     template: "%s · DevRadar",

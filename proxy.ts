@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
     '/_next(.*)',
     '/favicon.ico',
     '/design',
+    // Public scans of any GitHub username (public repositories only)
+    '/scan(.*)',
     // Verified by their own signatures rather than a Clerk session
     '/api/inngest',
     '/api/webhooks(.*)',
