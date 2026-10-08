@@ -4,7 +4,10 @@ import { createRateLimiter } from "@/server/rate-limit";
 import { createJobPost, listJobPosts } from "@/server/services/job-posts";
 import { jobPostInputSchema } from "@/lib/job-posts";
 
-const limiter = createRateLimiter({ prefix: "job-posts", requests: 15, window: "1 h" });
+// Gemini extraction can exceed Vercel's default 10s function limit
+export const maxDuration = 60;
+
+const limiter =createRateLimiter({ prefix: "job-posts", requests: 15, window: "1 h" });
 
 export const GET = authed("job-posts.list", async (_request, { db, userId }) => {
     return json(await listJobPosts(db, userId));
