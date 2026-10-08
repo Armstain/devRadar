@@ -39,7 +39,7 @@ export const STRONG = 55;
 
 // "some" scales with strength: from 0.3 for a trace to nearly full credit
 // just below STRONG.
-function credit(fit: RequirementFit): number {
+export function credit(fit: RequirementFit): number {
     switch (fit.status) {
         case "strong":
             return 1;
@@ -51,7 +51,7 @@ function credit(fit: RequirementFit): number {
             return 0;
     }
 }
-const WEIGHT = { required: 2, preferred: 1 };
+export const WEIGHT = { required: 2, preferred: 1 };
 
 // Technologies close enough that one is a credible stepping stone to the other.
 const RELATED_GROUPS: string[][] = [

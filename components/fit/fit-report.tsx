@@ -8,6 +8,8 @@ import { Markdown } from "@/components/markdown"
 import { Scope } from "@/components/scope"
 import { AreaRadar } from "@/components/skills/area-radar"
 import { StatusIcon, STATUS_LABELS } from "@/components/fit/status-icon"
+import { useCv } from "@/hooks/use-cv"
+import { combineWithCv, years, type CombinedFit, type CvEvidence, type CvStatus } from "@/lib/fit/cv"
 import { Button } from "@/components/ui/button"
 import { Panel, PanelHeader } from "@/components/ui/panel"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -30,8 +32,16 @@ function topGap(requirements: RequirementFit[]): RequirementFit | undefined {
   return gaps.find((r) => r.importance === "required") ?? gaps[0]
 }
 
+type Row = RequirementFit & { cv?: CvEvidence; source?: CvStatus }
+
+const SENIORITY = { intern: "Intern", junior: "Junior", mid: "Mid-level", senior: "Senior", staff: "Staff", lead: "Lead", principal: "Principal" } as const
+
 export function FitReport({ view }: { view: JobPostView }) {
   const { extraction, fit } = view
+  // With a CV in this browser, the report weighs it alongside the code
+  const { cv } = useCv()
+  const combined = cv ? combineWithCv(fit, cv, extraction.seniority) : null
+  const rows: Row[] = combined?.requirements ?? fit.requirements
   const facts = [
     extraction.location,
     extraction.workplace && extraction.workplace[0].toUpperCase() + extraction.workplace.slice(1),
@@ -39,11 +49,19 @@ export function FitReport({ view }: { view: JobPostView }) {
     salaryLine(extraction.salary),
   ].filter(Boolean) as string[]
 
-  const required = fit.requirements.filter((r) => r.importance === "required")
-  const preferred = fit.requirements.filter((r) => r.importance === "preferred")
-  const toClose = fit.requirements
+  const required = rows.filter((r) => r.importance === "required")
+  const preferred = rows.filter((r) => r.importance === "preferred")
+  // Claims only the CV makes still count here, after the real gaps: code
+  // that backs them up is what a reviewer can check
+  const toClose = rows
     .filter((r) => r.status === "gap" || r.status === "related")
-    .sort((a, b) => Number(b.importance === "required") - Number(a.importance === "required") || Number(a.status === "related") - Number(b.status === "related"))
+    .map((r) => (r.source === "cv" ? { ...r, note: `On your CV, but no repository shows ${r.technology?.name ?? r.skill}. A small public project would back the claim up.` } : r))
+    .sort(
+      (a, b) =>
+        Number(a.source === "cv") - Number(b.source === "cv") ||
+        Number(b.importance === "required") - Number(a.importance === "required") ||
+        Number(a.status === "related") - Number(b.status === "related")
+    )
   const gap = topGap(fit.requirements)
   const gapArea = gap?.technology ? TECHNOLOGY_BY_ID.get(gap.technology.id)?.area : null
 
@@ -62,8 +80,13 @@ export function FitReport({ view }: { view: JobPostView }) {
               {extraction.company ? <span className="text-ink-soft"> at {extraction.company}</span> : null}
             </h1>
             {facts.length ? <p className="text-ink-soft">{facts.join(" · ")}</p> : null}
+            <ExperienceLine combined={combined} />
           </div>
-          <ScoreReadout score={fit.score} verdict={fit.verdict} />
+          <ScoreReadout
+            score={combined?.score ?? fit.score}
+            verdict={combined?.verdict ?? fit.verdict}
+            note={combined ? scoreNote(combined) : null}
+          />
           <p className="max-w-xl text-[15px] leading-relaxed text-ink-soft">{fit.summary}</p>
           {fit.score !== null && fit.confidence === "low" ? (
             <p className="max-w-xl text-[13px] text-muted">Only a few requirements could be checked against code, so treat this as a rough read.</p>
@@ -134,7 +157,7 @@ export function FitReport({ view }: { view: JobPostView }) {
             >
               <span />
               <span className="label-quiet">Requirement</span>
-              <span className="label-quiet">Evidence in your code</span>
+              <span className="label-quiet">{combined ? "Evidence in your code and CV" : "Evidence in your code"}</span>
               <span className="label-quiet">Strength</span>
             </div>
             <RequirementGroup title="Required" items={required} showTitle={preferred.length > 0} />
@@ -170,13 +193,14 @@ export function FitReport({ view }: { view: JobPostView }) {
               </section>
             )}
             <dl className="flex flex-col rounded-xl bg-raised px-5 py-2 text-sm">
-              {(["strong", "some", "related", "gap", "unverifiable"] as const)
-                .filter((s) => fit.counts[s])
-                .map((s) => (
+              {(["strong", "some", "cv", "related", "gap", "unverifiable"] as const)
+                .map((s) => ({ s, n: s === "cv" ? (combined?.cvOnly ?? 0) : rows.filter((r) => displayStatus(r) === s).length }))
+                .filter(({ n }) => n)
+                .map(({ s, n }) => (
                   <div key={s} className="flex items-center gap-2.5 border-b border-line py-2 last:border-b-0">
                     <StatusIcon status={s} className="size-3.5" />
                     <dt className="text-ink-soft">{STATUS_LABELS[s]}</dt>
-                    <dd className="ml-auto font-semibold tabular">{fit.counts[s]}</dd>
+                    <dd className="ml-auto font-semibold tabular">{n}</dd>
                   </div>
                 ))}
             </dl>
@@ -223,7 +247,42 @@ function SaveButton({ view }: { view: JobPostView }) {
   )
 }
 
-function RequirementGroup({ title, items, showTitle }: { title: string; items: RequirementFit[]; showTitle: boolean }) {
+function displayStatus(r: Row) {
+  return r.source === "cv" ? ("cv" as const) : r.status
+}
+
+function scoreNote(c: CombinedFit): string {
+  if (c.codeScore === null) return "From your CV alone. Connect GitHub to add evidence from your code."
+  const added = (c.score ?? 0) - c.codeScore
+  return added > 0 ? `${c.codeScore} from your code, +${added} from your CV` : `${c.codeScore} from your code; your CV adds nothing new for this role`
+}
+
+// What the CV says about level and years, next to what the post asks for
+function ExperienceLine({ combined }: { combined: CombinedFit | null }) {
+  if (!combined) {
+    return (
+      <p className="text-sm text-muted">
+        <Link href="/github#cv" className="font-medium text-brand hover:underline">
+          Add your CV
+        </Link>{" "}
+        to count your work experience too. It stays in this browser.
+      </p>
+    )
+  }
+  const { seniority, totalMonths, asked, match } = combined.experience
+  if (!seniority && !totalMonths) return null
+  const parts = [seniority ? `${SENIORITY[seniority]} level` : null, totalMonths ? `about ${years(totalMonths)} of experience` : null].filter(Boolean)
+  return (
+    <p className="text-sm text-ink-soft">
+      <span className="font-medium text-ink">Your CV:</span> {parts.join(", ")}
+      {asked && match === "meets" ? " · matches the role" : null}
+      {asked && match === "below" ? <span className="font-medium text-warn-ink"> · the role asks for {SENIORITY[asked].toLowerCase()}</span> : null}
+      {asked && match === "above" ? ` · above the ${SENIORITY[asked].toLowerCase()} level asked` : null}
+    </p>
+  )
+}
+
+function RequirementGroup({ title, items, showTitle }: { title: string; items: Row[]; showTitle: boolean }) {
   if (!items.length) return null
   return (
     <section>
@@ -234,11 +293,11 @@ function RequirementGroup({ title, items, showTitle }: { title: string; items: R
             key={r.skill}
             className="grid grid-cols-[18px_minmax(0,1fr)] gap-x-3 gap-y-1.5 border-b border-line px-5 py-3.5 last:border-b-0 md:grid-cols-[18px_minmax(0,1fr)_minmax(0,1fr)_72px] md:gap-x-6"
           >
-            <StatusIcon status={r.status} className="mt-0.5" />
+            <StatusIcon status={displayStatus(r)} className="mt-0.5" />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="font-semibold">
                 {r.skill}
-                <span className="sr-only">: {STATUS_LABELS[r.status]}</span>
+                <span className="sr-only">: {STATUS_LABELS[displayStatus(r)]}</span>
               </span>
               <q className="line-clamp-2 text-[13px] text-muted" title={r.quote}>
                 {r.quote}
@@ -248,7 +307,7 @@ function RequirementGroup({ title, items, showTitle }: { title: string; items: R
               <Evidence requirement={r} />
             </div>
             <div className="col-start-2 flex items-center md:col-start-auto md:items-start md:pt-1.5">
-              {r.status === "unverifiable" ? null : (
+              {r.status === "unverifiable" || r.source === "cv" ? null : (
                 <>
                   <DotMeter value={r.status === "related" ? (r.related?.strength ?? 0) / 2 : (r.technology?.strength ?? 0)} gap={r.status === "gap"} />
                   <span className="sr-only">Strength {r.technology?.strength ?? 0} of 100</span>
@@ -262,7 +321,33 @@ function RequirementGroup({ title, items, showTitle }: { title: string; items: R
   )
 }
 
-function Evidence({ requirement: r }: { requirement: RequirementFit }) {
+function Evidence({ requirement: r }: { requirement: Row }) {
+  const code = <CodeEvidence requirement={r} />
+  if (!r.cv) return code
+  const asked = r.cv.yearsAsked
+  return (
+    <span className="flex flex-col gap-1.5">
+      {r.source === "cv" ? null : code}
+      {r.cv.found ? (
+        <span className="flex items-start gap-1.5 text-ink-soft">
+          <StatusIcon status="cv" className="mt-px size-3.5" />
+          <span className="min-w-0">
+            <span className="line-clamp-2">{r.cv.detail}</span>
+            {asked !== null && r.cv.months ? (
+              <span className={r.cv.months >= asked * 12 ? "text-muted" : "font-medium text-warn-ink"}>
+                {r.cv.months >= asked * 12 ? `Covers the ${asked}+ years asked` : `The post asks for ${asked}+ years`}
+              </span>
+            ) : null}
+          </span>
+        </span>
+      ) : r.source === "neither" && r.status === "unverifiable" ? (
+        <span className="text-muted">Not in your code or on your CV</span>
+      ) : null}
+    </span>
+  )
+}
+
+function CodeEvidence({ requirement: r }: { requirement: Row }) {
   if ((r.status === "strong" || r.status === "some") && r.technology) {
     return (
       <span className="flex flex-col gap-0.5">

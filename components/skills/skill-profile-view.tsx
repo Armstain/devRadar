@@ -11,7 +11,18 @@ import { cn } from "@/lib/utils"
 // The whole skill profile. Used by the signed-in profile page and the public
 // scan page, so it's a server-safe component: no hooks, no client state.
 
-export function SkillProfileView({ profile, actions, notice }: { profile: SkillProfile; actions?: React.ReactNode; notice?: React.ReactNode }) {
+export function SkillProfileView({
+  profile,
+  actions,
+  notice,
+  children,
+}: {
+  profile: SkillProfile
+  actions?: React.ReactNode
+  notice?: React.ReactNode
+  // Private sections shown under the radar on the owner's own page (the CV)
+  children?: React.ReactNode
+}) {
   return (
     <div className="flex flex-col gap-6">
       <ProfileHeader profile={profile} actions={actions} />
@@ -31,6 +42,8 @@ export function SkillProfileView({ profile, actions, notice }: { profile: SkillP
           </div>
         </Panel>
       </div>
+
+      {children}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         <Panel className="lg:col-span-7">
