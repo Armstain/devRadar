@@ -4,8 +4,8 @@ import { STATUS_LABELS, type ApplicationStatus } from "@/lib/applications"
 // Each stage differs by shape as well as colour, so it reads without colour.
 const dotClasses: Record<ApplicationStatus, string> = {
   applied: "border-[1.5px] border-muted",
-  "in-progress": "bg-signal",
-  offer: "bg-signal ring-2 ring-signal-soft",
+  "in-progress": "bg-brand",
+  offer: "bg-brand ring-2 ring-brand-soft",
   rejected: "bg-muted [clip-path:polygon(0_40%,100%_40%,100%_60%,0_60%)]",
 }
 

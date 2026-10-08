@@ -15,21 +15,21 @@ export function PipelineFunnel({ stats, className }: { stats: PipelineStats; cla
         <PanelHeader
           title="Pipeline"
           description="How far your applications get"
-          action={<Link href="/applications" className="text-[13px] text-signal hover:underline">View all</Link>}
+          action={<Link href="/applications" className="text-[13px] text-brand hover:underline">View all</Link>}
         />
         <ol className="flex flex-col">
           {stats.funnel.map((stage, i) => (
             <li key={stage.label} className="flex flex-col gap-2">
               {stage.conversion !== null ? (
-                <span className="py-2.5 font-mono text-xs text-muted">↓ {percent(stage.conversion)} moved on</span>
+                <span className="py-2.5 text-xs text-muted">↓ <span className="tabular">{percent(stage.conversion)}</span> moved on</span>
               ) : null}
               <div className="flex items-baseline gap-3">
                 <span className="font-medium">{stage.label}</span>
-                <span className="ml-auto font-mono text-xl font-medium tabular">{stage.count}</span>
+                <span className="ml-auto text-xl font-semibold tabular">{stage.count}</span>
               </div>
               <div className="h-3 rounded-[3px] bg-raised">
                 <div
-                  className={`h-3 rounded-[3px] bg-signal ${fills[i] ?? ""}`}
+                  className={`h-3 rounded-[3px] bg-brand ${fills[i] ?? ""}`}
                   style={{ width: `${(stage.count / max) * 100}%`, minWidth: stage.count ? 6 : 0 }}
                 />
               </div>

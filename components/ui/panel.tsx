@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 export function Panel({ className, ...props }: React.ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-xl border border-line bg-panel shadow-panel", className)}
+      className={cn("rounded-xl border border-line bg-panel", className)}
       {...props}
     />
   )

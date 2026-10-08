@@ -42,7 +42,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2.5">
-        <span className="label-mono" suppressHydrationWarning>
+        <span className="label-quiet" suppressHydrationWarning>
           {dateLine(now)}
         </span>
         <h1 className="text-4xl font-semibold tracking-[-0.03em] sm:text-[40px] sm:leading-[1.1]" suppressHydrationWarning>
@@ -52,29 +52,31 @@ export default function DashboardPage() {
         {isLoading ? (
           <Skeleton className="h-6 w-full max-w-xl" />
         ) : (
-          <p className="max-w-2xl text-lg text-muted">{summary(stats)}</p>
+          <p className="max-w-2xl text-lg text-ink-soft">{summary(stats)}</p>
         )}
       </section>
 
       {isLoading ? (
         <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading your dashboard">
-          <Skeleton className="h-32 rounded-xl" />
           <div className="grid gap-6 lg:grid-cols-12">
             <Skeleton className="h-96 rounded-xl lg:col-span-7" />
             <Skeleton className="h-96 rounded-xl lg:col-span-5" />
           </div>
+          <Skeleton className="h-24 rounded-xl" />
         </div>
       ) : !stats.total ? (
         <FirstRun />
       ) : (
         <>
+          <div className="grid gap-6 lg:grid-cols-12">
+            <AttentionList applications={applications ?? []} now={now} className="lg:col-span-7" />
+            <SkillRadarCard className="lg:col-span-5" />
+          </div>
           <KpiStrip stats={stats} />
           <div className="grid gap-6 lg:grid-cols-12">
             <PipelineFunnel stats={stats} className="lg:col-span-7" />
-            <SkillRadarCard className="lg:col-span-5" />
+            <ActivityCard className="lg:col-span-5" />
           </div>
-          <AttentionList applications={applications ?? []} now={now} />
-          <ActivityCard />
         </>
       )}
     </div>

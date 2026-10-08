@@ -14,7 +14,7 @@ const STEPS = [
 export function Scanning({ title, subtitle, className }: { title: string; subtitle?: string; className?: string }) {
   return (
     <div role="status" className={cn("flex flex-col items-center gap-8 py-10 text-center", className)}>
-      <Scope className="max-w-[260px]" />
+      <Scope className="max-w-[260px]" sweeping />
       <div className="flex flex-col gap-2">
         <p className="text-2xl font-semibold tracking-tight">{title}</p>
         {subtitle ? <p className="max-w-md text-muted">{subtitle}</p> : null}
@@ -26,7 +26,7 @@ export function Scanning({ title, subtitle, className }: { title: string; subtit
             className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-500"
             style={{ animationDelay: `${300 + i * 900}ms` }}
           >
-            <span className="text-signal">›</span> {step}
+            <span className="text-brand">›</span> {step}
           </li>
         ))}
       </ol>

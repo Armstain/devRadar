@@ -46,8 +46,8 @@ export default function JobFitPage() {
   return (
     <div className="flex flex-col gap-7">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Job fit</h1>
-        <p className="max-w-2xl text-muted">
+        <h1 className="text-3xl font-semibold tracking-[-0.025em]">Job fit</h1>
+        <p className="max-w-2xl text-ink-soft">
           Paste a job post. DevRadar pulls out every requirement, checks each one against the code you’ve shipped, and tells you where
           you’re strong and what to close before you apply.
         </p>
@@ -108,7 +108,7 @@ export default function JobFitPage() {
             <ol className="flex flex-wrap gap-x-6 gap-y-1 border-t border-line pt-4 text-[13px] text-muted">
               {STEPS.map((step, i) => (
                 <li key={step}>
-                  <span className="font-mono text-signal">{String(i + 1).padStart(2, "0")}</span> {step}
+                  <span className="font-semibold text-brand tabular">{i + 1}</span> {step}
                 </li>
               ))}
             </ol>
@@ -147,8 +147,8 @@ function RecentAnalyses() {
                 <span className="hidden text-[13px] text-muted sm:inline">{post.verdict}</span>
                 <span
                   className={cn(
-                    "min-w-12 rounded-md px-2 py-1 text-center font-mono text-sm tabular",
-                    post.score === null ? "bg-raised text-muted" : post.score >= 55 ? "bg-signal-soft text-signal" : "bg-caution-soft text-caution"
+                    "min-w-12 rounded-md px-2 py-1 text-center text-sm font-semibold tabular",
+                    post.score === null ? "bg-raised text-muted" : post.score >= 55 ? "bg-brand-soft text-brand" : "bg-warn-soft text-warn-ink"
                   )}
                 >
                   {post.score ?? "—"}

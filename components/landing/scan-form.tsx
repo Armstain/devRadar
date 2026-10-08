@@ -9,7 +9,18 @@ import { cn } from "@/lib/utils"
 
 // "github.com/ [username] [Scan]". Accepts a username, @username or a
 // profile URL, and opens the public scan for it.
-export function ScanForm({ defaultValue = "", size = "lg", className }: { defaultValue?: string; size?: "md" | "lg"; className?: string }) {
+export function ScanForm({
+  defaultValue = "",
+  size = "lg",
+  label,
+  className,
+}: {
+  defaultValue?: string
+  size?: "md" | "lg"
+  // A visible label; without one the label is for screen readers only
+  label?: string
+  className?: string
+}) {
   const router = useRouter()
   const [value, setValue] = useState(defaultValue)
   const [error, setError] = useState<string | null>(null)
@@ -31,13 +42,13 @@ export function ScanForm({ defaultValue = "", size = "lg", className }: { defaul
         router.push(`/scan/${login}`)
       }}
     >
-      <label htmlFor={id} className="sr-only">
-        GitHub username
+      <label htmlFor={id} className={label ? "text-[13.5px] font-semibold" : "sr-only"}>
+        {label ?? "GitHub username"}
       </label>
       <div
         className={cn(
-          "flex items-center gap-2 rounded-xl border bg-panel p-1.5 pl-4 transition-colors focus-within:border-signal focus-within:ring-2 focus-within:ring-signal-soft",
-          error ? "border-danger" : "border-line"
+          "flex items-center gap-2 rounded-[10px] border-[1.5px] bg-panel p-1.5 pl-4 transition-colors focus-within:border-brand focus-within:ring-4 focus-within:ring-brand-soft",
+          error ? "border-danger" : "border-scope"
         )}
       >
         <span className="hidden font-mono text-muted sm:inline" aria-hidden="true">

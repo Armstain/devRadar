@@ -1,70 +1,64 @@
 import Link from "next/link"
-import { Clock } from "lucide-react"
-import { Monogram } from "@/components/ui/monogram"
 import { Panel, PanelHeader } from "@/components/ui/panel"
-import { StagePill } from "@/components/ui/stage-pill"
-import type { Application } from "@/lib/applications"
+import { STATUS_LABELS, type Application } from "@/lib/applications"
 import { daysSince, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline"
 import { cn } from "@/lib/utils"
 
 const LIMIT = 6
 
 function nextStep(app: Application, overdue: boolean): string {
-  if (overdue) return "Send a follow-up"
-  if (app.status === "offer") return "Review the offer"
-  return "Prepare for the next round"
+  if (overdue) return "send a follow-up"
+  if (app.status === "offer") return "review the offer"
+  return "prepare for the next round"
 }
 
-export function AttentionList({ applications, now }: { applications: Application[]; now: Date }) {
+// What needs you: applications gone quiet first (a triangle marks each), then
+// live interviews and offers.
+export function AttentionList({ applications, now, className }: { applications: Application[]; now: Date; className?: string }) {
   const overdue = applications.filter((a) => needsFollowUp(a, now)).sort((a, b) => lastActivity(a).getTime() - lastActivity(b).getTime())
   const live = applications.filter((a) => (a.status === "in-progress" || a.status === "offer") && !needsFollowUp(a, now))
   const items = [...overdue, ...live].slice(0, LIMIT)
 
   return (
-    <Panel className="overflow-hidden">
-      <div className="px-6 pb-3 pt-6">
+    <Panel className={className}>
+      <div className="flex flex-col gap-2 p-5 sm:p-6">
         <PanelHeader
-          title="Needs attention"
-          description={items.length ? "Quiet applications first, then live interviews and offers" : undefined}
-          action={<Link href="/applications?view=follow-up" className="text-[13px] text-signal hover:underline">All follow-ups</Link>}
+          title="Needs you"
+          description={items.length ? "Sorted by how long they’ve been quiet" : undefined}
+          action={<Link href="/applications?view=follow-up" className="text-[13px] text-brand hover:underline">All follow-ups</Link>}
         />
-      </div>
-      {items.length ? (
-        <ul>
-          {items.map((app) => {
-            const isOverdue = needsFollowUp(app, now)
-            const days = daysSince(lastActivity(app), now)
-            return (
-              <li key={app.id} className="border-t border-line">
-                <Link
-                  href={`/applications/${app.id}`}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-6 py-3.5 transition-colors hover:bg-raised/60 md:grid-cols-[minmax(0,2.2fr)_130px_150px_minmax(0,1.6fr)]"
-                >
-                  <span className="flex min-w-0 items-center gap-3 max-md:col-span-2">
-                    <Monogram name={app.company} />
+        {items.length ? (
+          <ul className="mt-1">
+            {items.map((app) => {
+              const isOverdue = needsFollowUp(app, now)
+              const days = daysSince(lastActivity(app), now)
+              return (
+                <li key={app.id} className="border-t border-line first:border-t-0">
+                  <Link
+                    href={`/applications/${app.id}`}
+                    className="-mx-2 grid grid-cols-[14px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-raised/70"
+                  >
+                    {isOverdue ? (
+                      <span aria-label="Gone quiet" className="tri inline-block h-2.5 w-[11px] bg-warn" />
+                    ) : (
+                      <span aria-hidden="true" className="size-[9px] rounded-full bg-brand" />
+                    )}
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate font-semibold">{app.company}</span>
-                      <span className="truncate text-[13px] text-muted">{app.position}</span>
+                      <span className="truncate text-[13px] text-muted">
+                        {app.position} · {STATUS_LABELS[app.status].toLowerCase()} · {nextStep(app, isOverdue)}
+                      </span>
                     </span>
-                  </span>
-                  <span className="md:justify-self-start">
-                    <StagePill status={app.status} />
-                  </span>
-                  <span className={cn("flex items-center gap-1.5 text-sm max-md:justify-self-end", isOverdue ? "text-caution" : "text-muted")}>
-                    {isOverdue ? <Clock className="size-3.5" aria-label="Overdue" /> : null}
-                    {relativeDays(days)}
-                  </span>
-                  <span className="hidden text-sm md:block">{nextStep(app, isOverdue)}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      ) : (
-        <p className="border-t border-line px-6 py-8 text-sm text-muted">
-          Nothing needs you right now. Applications that go quiet for 10 days show up here.
-        </p>
-      )}
+                    <span className={cn("text-[13px] tabular", isOverdue ? "font-semibold text-warn-ink" : "text-ink-soft")}>{relativeDays(days)}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="py-6 text-sm text-muted">Nothing needs you right now. Applications that go quiet for 10 days show up here.</p>
+        )}
+      </div>
     </Panel>
   )
 }

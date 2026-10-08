@@ -3,10 +3,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { CornerDownLeft, Plus, ScanSearch, Search } from "lucide-react";
+import { useTheme } from "next-themes";
+import { CornerDownLeft, PanelLeft, PanelTop, Plus, ScanSearch, Search, SunMoon } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { Monogram } from "@/components/ui/monogram";
 import { pipelineViews, workspaceNav } from "@/components/app-shell/nav";
+import type { LayoutMode } from "@/components/app-shell/layout-mode";
 import { useApplications } from "@/hooks/use-applications";
 import { STATUS_LABELS } from "@/lib/applications";
 import { cn } from "@/lib/utils";
@@ -25,9 +27,12 @@ interface CommandMenuProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddApplication: () => void;
+  onToggleLayout: () => void;
+  layout: LayoutMode;
 }
 
-export function CommandMenu({ open, onOpenChange, onAddApplication }: CommandMenuProps) {
+export function CommandMenu({ open, onOpenChange, onAddApplication, onToggleLayout, layout }: CommandMenuProps) {
+  const { resolvedTheme, setTheme } = useTheme();
   const router = useRouter();
   const { data: applications } = useApplications();
   const [query, setQuery] = useState("");
@@ -54,6 +59,23 @@ export function CommandMenu({ open, onOpenChange, onAddApplication }: CommandMen
         keywords: "fit score paste requirements",
         run: go("/fit"),
       },
+      {
+        id: "layout",
+        group: "Actions",
+        label: layout === "top" ? "Switch to sidebar" : "Switch to top bar",
+        hint: "⌘B",
+        icon: layout === "top" ? <PanelLeft className="size-4" aria-hidden="true" /> : <PanelTop className="size-4" aria-hidden="true" />,
+        keywords: "layout navigation sidebar top bar",
+        run: onToggleLayout,
+      },
+      {
+        id: "theme",
+        group: "Actions",
+        label: resolvedTheme === "dark" ? "Switch to day theme" : "Switch to night theme",
+        icon: <SunMoon className="size-4" aria-hidden="true" />,
+        keywords: "dark light theme mode",
+        run: () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
+      },
       ...workspaceNav.map((item) => ({
         id: `nav-${item.href}`,
         group: "Go to" as const,
@@ -78,7 +100,7 @@ export function CommandMenu({ open, onOpenChange, onAddApplication }: CommandMen
         run: go(`/applications/${app.id}`),
       })),
     ];
-  }, [applications, router, onAddApplication]);
+  }, [applications, router, onAddApplication, onToggleLayout, layout, resolvedTheme, setTheme]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -157,7 +179,7 @@ export function CommandMenu({ open, onOpenChange, onAddApplication }: CommandMen
                 lastGroup = item.group;
                 return (
                   <li key={item.id} role="presentation">
-                    {header ? <div className="label-mono px-3 pb-1 pt-3" aria-hidden="true">{header}</div> : null}
+                    {header ? <div className="label-quiet px-3 pb-1 pt-3" aria-hidden="true">{header}</div> : null}
                     <div
                       id={`${listId}-${item.id}`}
                       role="option"

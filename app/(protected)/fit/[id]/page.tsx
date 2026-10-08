@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { FitReport } from "@/components/fit/fit-report";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
@@ -15,16 +14,11 @@ export default function FitReportPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/fit" className="flex w-fit items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        Job fit
-      </Link>
       {isLoading ? (
         <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading the fit report">
-          <Skeleton className="h-20 w-2/3 rounded-xl" />
-          <div className="grid gap-6 lg:grid-cols-12">
-            <Skeleton className="h-80 rounded-xl lg:col-span-5" />
-            <Skeleton className="h-80 rounded-xl lg:col-span-7" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-96 rounded-xl" />
+            <Skeleton className="h-96 rounded-xl" />
           </div>
           <Skeleton className="h-96 rounded-xl" />
         </div>
