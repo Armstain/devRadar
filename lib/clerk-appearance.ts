@@ -8,15 +8,15 @@ import { tokens } from "@/lib/tokens";
 function palette(theme: "light" | "dark") {
   const t = tokens[theme];
   return {
-    colorPrimary: t.signal,
-    colorPrimaryForeground: t["signal-ink"],
+    colorPrimary: t.brand,
+    colorPrimaryForeground: t["brand-ink"],
     colorBackground: t.panel,
     colorForeground: t.ink,
     colorMutedForeground: t.muted,
     colorInput: t.ground,
     colorInputForeground: t.ink,
     colorBorder: t.line,
-    colorRing: t.signal,
+    colorRing: t.brand,
     colorDanger: t.danger,
     colorNeutral: t.ink,
   };
@@ -28,7 +28,7 @@ export function useClerkAppearance() {
     variables: {
       ...palette(resolvedTheme === "light" ? "light" : "dark"),
       fontFamily: "var(--font-grotesk), ui-sans-serif, system-ui, sans-serif",
-      borderRadius: "10px",
+      borderRadius: "8px",
     },
   };
 }

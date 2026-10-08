@@ -9,13 +9,15 @@ interface Kpi {
   positive?: boolean
 }
 
+// The pipeline in four numbers, as a quiet ruled row rather than tiles: the
+// numbers support the page, they aren't its point.
 export function KpiStrip({ stats }: { stats: PipelineStats }) {
   const heardBack = stats.inProgress + stats.offers + stats.rejected
   const kpis: Kpi[] = [
     {
       label: "Active applications",
       value: String(stats.active),
-      note: stats.addedThisWeek ? `+${stats.addedThisWeek} this week` : "None added this week",
+      note: stats.addedThisWeek ? `${stats.addedThisWeek} added this week` : "None added this week",
       positive: stats.addedThisWeek > 0,
     },
     {
@@ -36,12 +38,15 @@ export function KpiStrip({ stats }: { stats: PipelineStats }) {
   ]
 
   return (
-    <section aria-label="Key numbers" className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
-      {kpis.map((kpi) => (
-        <div key={kpi.label} className="flex flex-col gap-1 bg-panel px-5 py-4 sm:px-6 sm:py-5">
-          <span className="text-[13px] text-muted">{kpi.label}</span>
-          <span className="font-mono text-3xl font-medium tracking-tight tabular sm:text-[34px] sm:leading-tight">{kpi.value}</span>
-          <span className={cn("text-[13px]", kpi.positive ? "text-signal" : "text-muted")}>{kpi.note}</span>
+    <section aria-label="Key numbers" className="grid grid-cols-2 border-y border-line lg:grid-cols-4">
+      {kpis.map((kpi, i) => (
+        <div
+          key={kpi.label}
+          className={cn("flex flex-col gap-0.5 py-4", i % 2 === 1 && "pl-5 max-lg:border-l max-lg:border-line", i > 0 && "lg:border-l lg:border-line lg:pl-6", i >= 2 && "max-lg:border-t max-lg:border-line")}
+        >
+          <span className="label-quiet">{kpi.label}</span>
+          <span className="text-3xl font-semibold tracking-[-0.04em] tabular">{kpi.value}</span>
+          <span className={cn("text-[13px]", kpi.positive ? "text-brand" : "text-muted")}>{kpi.note}</span>
         </div>
       ))}
     </section>

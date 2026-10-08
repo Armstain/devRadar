@@ -1,4 +1,5 @@
 import { ChevronRight, ExternalLink, Lock, Star } from "lucide-react"
+import { DotMeter } from "@/components/instrument/dot-meter"
 import { AreaRadar } from "@/components/skills/area-radar"
 import { ContributionHeatmap } from "@/components/skills/contribution-heatmap"
 import { Panel, PanelHeader } from "@/components/ui/panel"
@@ -17,13 +18,13 @@ export function SkillProfileView({ profile, actions, notice }: { profile: SkillP
       {notice}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        <Panel className="lg:col-span-5">
+        <Panel className="lg:col-span-6">
           <div className="flex flex-col gap-4 p-6">
             <PanelHeader title="Skill radar" description="Six areas, each scored 0–100 from your repositories" />
-            <AreaRadar areas={profile.areas} />
+            <AreaRadar areas={profile.areas} className="mx-auto w-full max-w-[520px]" />
           </div>
         </Panel>
-        <Panel className="lg:col-span-7">
+        <Panel className="lg:col-span-6">
           <div className="flex flex-col gap-2 p-6">
             <PanelHeader title="Where the scores come from" description="Open an area to see the technologies and repositories behind it" />
             <AreaBreakdown areas={profile.areas} technologies={profile.technologies} />
@@ -52,7 +53,7 @@ export function SkillProfileView({ profile, actions, notice }: { profile: SkillP
             title="Contributions"
             description="The last year on GitHub"
             action={
-              <span className="font-mono text-[13px] text-muted">
+              <span className="text-[13px] text-muted tabular">
                 {profile.activity.currentStreak}d current · {profile.activity.longestStreak}d longest streak
               </span>
             }
@@ -92,7 +93,7 @@ function ProfileHeader({ profile, actions }: { profile: SkillProfile; actions?: 
         {/* eslint-disable-next-line @next/next/no-img-element -- GitHub avatars are already sized and cached by GitHub's CDN */}
         <img src={user.avatarUrl} alt="" width={80} height={80} className="size-20 shrink-0 rounded-2xl border border-line bg-raised" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <span className="label-mono text-signal">{profile.archetype}</span>
+          <span className="label-quiet text-brand">{profile.archetype}</span>
           <h1 className="truncate text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{user.name ?? user.login}</h1>
           <p className="flex flex-wrap items-center gap-x-2 text-muted">
             <a href={user.url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-ink hover:underline">
@@ -108,29 +109,21 @@ function ProfileHeader({ profile, actions }: { profile: SkillProfile; actions?: 
 
       <p className="max-w-3xl text-balance text-xl leading-snug tracking-tight sm:text-2xl">{profile.headline}</p>
 
-      <dl className="grid grid-cols-2 overflow-hidden rounded-xl border border-line bg-panel sm:grid-cols-4">
+      <dl className="grid grid-cols-2 border-y border-line sm:grid-cols-4">
         {facts.map((fact, i) => (
           <div
             key={fact.label}
-            className={cn("flex flex-col gap-1 p-4", i % 2 === 1 && "border-l border-line", i >= 2 && "border-t border-line sm:border-t-0", i === 2 && "sm:border-l")}
+            className={cn("flex flex-col gap-1 py-4 pr-4", i % 2 === 1 && "border-l border-line pl-4", i >= 2 && "border-t border-line sm:border-t-0", i === 2 && "sm:border-l sm:pl-4")}
           >
-            <dt className="label-mono">{fact.label}</dt>
+            <dt className="label-quiet">{fact.label}</dt>
             <dd className="flex items-baseline gap-1.5">
-              <span className="font-mono text-2xl font-medium tracking-tight tabular">{fact.value}</span>
+              <span className="text-3xl font-semibold tracking-[-0.03em] tabular">{fact.value}</span>
               {fact.detail ? <span className="text-[13px] text-muted">{fact.detail}</span> : null}
             </dd>
           </div>
         ))}
       </dl>
     </header>
-  )
-}
-
-function Meter({ value, className }: { value: number; className?: string }) {
-  return (
-    <span className={cn("block h-1.5 rounded-full bg-raised", className)} aria-hidden="true">
-      <span className="block h-1.5 rounded-full bg-signal" style={{ width: `${Math.max(2, value)}%` }} />
-    </span>
   )
 }
 
@@ -147,13 +140,15 @@ function AreaBreakdown({ areas, technologies }: { areas: AreaSkill[]; technologi
                 <ChevronRight className="size-4 shrink-0 text-muted transition-transform group-open:rotate-90" aria-hidden="true" />
                 <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <span className="flex items-baseline justify-between gap-3">
-                    <span className="font-medium">{area.label}</span>
-                    <span className="font-mono text-sm tabular">
-                      {area.score}
-                      <span className="text-muted">/100</span>
+                    <span className="font-semibold">{area.label}</span>
+                    <span className="flex items-center gap-3">
+                      <DotMeter value={area.score} />
+                      <span className="w-14 text-right text-sm font-semibold tabular">
+                        {area.score}
+                        <span className="font-normal text-muted">/100</span>
+                      </span>
                     </span>
                   </span>
-                  <Meter value={area.score} />
                   <span className="truncate text-[13px] text-muted">
                     {area.technologies.length
                       ? area.technologies.slice(0, 4).map((t) => t.name).join(" · ") +
@@ -171,17 +166,17 @@ function AreaBreakdown({ areas, technologies }: { areas: AreaSkill[]; technologi
                     {area.technologies.map(({ id }) => {
                       const tech = byId.get(id)!
                       return (
-                        <li key={id} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] items-center gap-x-4 gap-y-1 text-sm sm:grid-cols-[10rem_6rem_minmax(0,1fr)]">
+                        <li key={id} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] items-center gap-x-4 gap-y-1 text-sm sm:grid-cols-[10rem_7.5rem_minmax(0,1fr)]">
                           <span className="truncate font-medium">{tech.name}</span>
                           <span className="flex items-center gap-2">
-                            <Meter value={tech.strength} className="w-16" />
-                            <span className="font-mono text-[12px] text-muted tabular">{tech.strength}</span>
+                            <DotMeter value={tech.strength} />
+                            <span className="text-[12px] text-muted tabular">{tech.strength}</span>
                           </span>
                           <span className="col-span-2 truncate text-[13px] text-muted sm:col-span-1">
                             {tech.evidence.slice(0, 3).map((e, i) => (
                               <span key={e.repo}>
                                 {i ? ", " : ""}
-                                <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-ink hover:underline">
+                                <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-mono text-[12.5px] hover:text-ink hover:underline">
                                   {e.repo}
                                 </a>
                               </span>
@@ -202,9 +197,9 @@ function AreaBreakdown({ areas, technologies }: { areas: AreaSkill[]; technologi
 }
 
 const insightMarker: Record<Insight["tone"], string> = {
-  signal: "mt-[7px] size-2 rounded-full bg-signal",
-  neutral: "mt-[7px] size-2 rounded-full border-[1.5px] border-muted",
-  caution: "mt-[6px] size-2.5 bg-caution [clip-path:polygon(50%_0,100%_100%,0_100%)]",
+  signal: "mt-[8px] size-2 rounded-full bg-brand",
+  neutral: "mt-[8px] size-2 rounded-full border-[1.5px] border-muted",
+  caution: "tri mt-[8px] h-[9px] w-[10px] bg-warn",
 }
 
 export function InsightList({ insights }: { insights: Insight[] }) {
@@ -235,15 +230,15 @@ function LanguageBar({ languages }: { languages: SkillProfile["languages"] }) {
     <div className="flex flex-col gap-4">
       <div className="flex h-3 gap-[3px] overflow-hidden rounded-full" aria-hidden="true">
         {shown.map((l, i) => (
-          <span key={l.name} className="h-full bg-signal first:rounded-l-full last:rounded-r-full" style={{ width: `${l.share * 100}%`, opacity: SHADES[i] }} />
+          <span key={l.name} className="h-full bg-brand first:rounded-l-full last:rounded-r-full" style={{ width: `${l.share * 100}%`, opacity: SHADES[i] }} />
         ))}
       </div>
       <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5">
         {languages.map((l, i) => (
           <li key={l.name} className="flex items-center gap-2 text-sm">
-            <span aria-hidden="true" className="size-2.5 shrink-0 rounded-[3px] bg-signal" style={{ opacity: SHADES[i] }} />
+            <span aria-hidden="true" className="size-2.5 shrink-0 rounded-[3px] bg-brand" style={{ opacity: SHADES[i] }} />
             <span className="truncate">{l.name}</span>
-            <span className="ml-auto font-mono text-[13px] text-muted tabular">
+            <span className="ml-auto text-[13px] text-muted tabular">
               {l.share < 0.01 ? "<1" : Math.round(l.share * 100)}%
             </span>
           </li>
@@ -265,7 +260,7 @@ function StackGrid({ technologies }: { technologies: TechnologySkill[] }) {
     <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
       {groups.map(({ area, techs }) => (
         <section key={area.id} className="flex flex-col gap-2.5">
-          <h3 className="label-mono">{area.label}</h3>
+          <h3 className="label-quiet">{area.label}</h3>
           <ul className="flex flex-wrap gap-1.5">
             {techs.map((t) => (
               <li
@@ -273,11 +268,11 @@ function StackGrid({ technologies }: { technologies: TechnologySkill[] }) {
                 title={`${t.name}: ${t.repoCount} ${t.repoCount === 1 ? "repository" : "repositories"}, last push ${shortDate(t.lastUsed)}`}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[13px]",
-                  t.strength >= 70 ? "border-signal-dim bg-signal-soft" : "border-line"
+                  t.strength >= 70 ? "border-brand-dim bg-brand-soft" : "border-line"
                 )}
               >
                 {t.name}
-                <span className="font-mono text-[11px] text-muted tabular">{t.repoCount}</span>
+                <span className="text-[11px] text-muted tabular">{t.repoCount}</span>
               </li>
             ))}
           </ul>
@@ -335,7 +330,7 @@ function RepoList({ repos }: { repos: SkillProfile["repos"] }) {
                     {repo.stars}
                   </span>
                 ) : null}
-                <span className="font-mono">{shortDate(repo.pushedAt)}</span>
+                <span className="tabular">{shortDate(repo.pushedAt)}</span>
               </span>
             </a>
           </li>

@@ -5,14 +5,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-[color,background-color,filter] active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-signal font-semibold text-signal-ink hover:brightness-110 active:brightness-95",
+        primary: "bg-brand font-semibold text-brand-ink hover:brightness-[1.08]",
         secondary: "border border-line bg-panel text-ink hover:bg-raised",
         ghost: "text-muted hover:bg-raised hover:text-ink",
-        link: "h-auto px-0 text-signal underline-offset-4 hover:underline",
+        link: "h-auto px-0 text-brand underline-offset-4 hover:underline",
         danger: "border border-line bg-panel text-danger hover:bg-danger-soft",
       },
       size: {

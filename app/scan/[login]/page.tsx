@@ -46,7 +46,7 @@ export default async function ScanPage({ params }: Props) {
           </Link>
           <ScanForm key={login} size="md" className="order-last w-full sm:order-none sm:ml-auto sm:w-80" />
           <Button asChild size="sm" className="ml-auto sm:ml-0">
-            <Link href="/sign-up">Get your own</Link>
+            <Link href="/sign-up">Create account</Link>
           </Button>
         </div>
       </header>
@@ -85,21 +85,21 @@ async function ScanResult({ login }: { login: string }) {
       <SkillProfileView
         profile={result.profile}
         notice={
-          <p className="font-mono text-[12px] text-muted">
+          <p className="text-[13px] text-muted">
             Public repositories only · scanned {timeAgo(result.scannedAt)}
           </p>
         }
       />
-      <section className="flex flex-col items-start gap-4 rounded-2xl border border-line bg-panel p-8 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">Is this you?</h2>
-          <p className="max-w-xl text-muted">
-            Sign up to include private repositories, keep the radar synced every night, and track your job applications against it.
+      <section className="flex flex-col items-start gap-5 rounded-xl bg-raised p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xl font-semibold tracking-[-0.02em]">Is this you? See which jobs it qualifies you for.</h2>
+          <p className="max-w-xl text-ink-soft">
+            Create an account to score job posts against this radar, include private repositories, and keep it synced every night.
           </p>
         </div>
         <Button asChild size="lg">
           <Link href="/sign-up">
-            Get started
+            Create account
             <ArrowRight aria-hidden="true" />
           </Link>
         </Button>
@@ -114,7 +114,7 @@ function Empty({ title, body }: { title: string; body: string }) {
       <Scope className="max-w-[200px]" />
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="max-w-md text-muted">{body}</p>
+        <p className="max-w-md text-ink-soft">{body}</p>
       </div>
     </div>
   );

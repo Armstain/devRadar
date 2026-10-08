@@ -4,77 +4,87 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Signal — the DevRadar design language.
- * One accent ("signal") reserved for what matters right now; amber
- * ("caution") for gaps and overdue items. Both themes are designed
- * separately rather than inverted; every text colour passes WCAG AA
- * against the ground (see /design).
+ * Instrument — the DevRadar design language.
+ * Every colour has one job: brand (petrol) marks the user's own data and the
+ * action they take next; warn and danger are reserved for gaps and failures
+ * and always come with an icon and a word; everything else is neutral.
+ * Day and night are designed separately. lib/tokens.ts mirrors these values
+ * and lib/tokens.test.ts checks contrast.
  */
 
-/* Light · Paper (`.light` forces it inside a dark page, e.g. on /design) */
+/* Day (`.light` forces it inside a dark page, e.g. on /design) */
 :root,
 .light {
-  --ground: #f4f5f2;
-  --panel: #ffffff;
-  --raised: #eceeeb;
-  --line: #dadfda;
-  --ink: #0e1310;
-  --muted: #545f58;
-  --signal: #0b7a4e;
-  --signal-ink: #ffffff;
-  --signal-soft: rgb(11 122 78 / 0.1);
-  --signal-dim: rgb(11 122 78 / 0.3);
-  --caution: #9a5b00;
-  --caution-soft: rgb(154 91 0 / 0.1);
-  --danger: #b42318;
-  --danger-soft: rgb(180 35 24 / 0.08);
-  --scope: #dadfda;
-  --shadow-panel: 0 1px 2px rgb(14 19 16 / 0.05);
-  --shadow-overlay: 0 12px 32px -8px rgb(14 19 16 / 0.18);
+  --ground: #f4f5f4;
+  --panel: #fbfbfa;
+  --raised: #eaecea;
+  --line: #dadcdb;
+  --ink: #141515;
+  --ink-soft: #3a3c3c;
+  --muted: #5f6262;
+  --brand: #00769e;
+  --brand-ink: #ffffff;
+  --warn: #fab219;
+  --warn-ink: #8a5500;
+  --danger: #b8312b;
+  --brand-soft: rgb(0 118 158 / 0.1);
+  --brand-dim: rgb(0 118 158 / 0.32);
+  --warn-soft: rgb(250 178 25 / 0.16);
+  --danger-soft: rgb(184 49 43 / 0.08);
+  --scope: #d2d5d3;
+  --status: #eaeceb;
+  --shadow-overlay: 0 12px 32px -8px rgb(20 21 21 / 0.18);
+  --shadow-lift: 0 18px 40px -24px rgb(20 21 21 / 0.45);
   color-scheme: light;
 }
 
-/* Dark · Scope (default) */
+/* Night */
 .dark {
-  --ground: #0a0d0b;
-  --panel: #111512;
-  --raised: #1a201c;
-  --line: #232a26;
-  --ink: #e6ebe7;
-  --muted: #8e9a93;
-  --signal: #3ddc97;
-  --signal-ink: #03130b;
-  --signal-soft: rgb(61 220 151 / 0.13);
-  --signal-dim: rgb(61 220 151 / 0.32);
-  --caution: #f5a524;
-  --caution-soft: rgb(245 165 36 / 0.14);
-  --danger: #f97066;
-  --danger-soft: rgb(249 112 102 / 0.12);
-  --scope: #29312c;
-  --shadow-panel: none;
+  --ground: #141413;
+  --panel: #1b1c1b;
+  --raised: #242625;
+  --line: #2e302f;
+  --ink: #ebecea;
+  --ink-soft: #c2c4c2;
+  --muted: #8d908e;
+  --brand: #2a9fc8;
+  --brand-ink: #0c1214;
+  --warn: #fab219;
+  --warn-ink: #f5b544;
+  --danger: #f07167;
+  --brand-soft: rgb(42 159 200 / 0.14);
+  --brand-dim: rgb(42 159 200 / 0.36);
+  --warn-soft: rgb(250 178 25 / 0.12);
+  --danger-soft: rgb(240 113 103 / 0.12);
+  --scope: #333634;
+  --status: #101110;
   --shadow-overlay: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 18px 40px -24px rgb(0 0 0 / 0.8);
   color-scheme: dark;
 }
 
 @theme inline {
   --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+  --font-mono: var(--font-plex), ui-monospace, SFMono-Regular, monospace;
 
   --color-ground: var(--ground);
   --color-panel: var(--panel);
   --color-raised: var(--raised);
   --color-line: var(--line);
   --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --color-muted: var(--muted);
-  --color-signal: var(--signal);
-  --color-signal-ink: var(--signal-ink);
-  --color-signal-soft: var(--signal-soft);
-  --color-signal-dim: var(--signal-dim);
-  --color-caution: var(--caution);
-  --color-caution-soft: var(--caution-soft);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-dim: var(--brand-dim);
+  --color-warn: var(--warn);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-scope: var(--scope);
+  --color-status: var(--status);
 
   /* Aliases for the Radix-based primitives (dialog, select, menu). */
   --color-background: var(--ground);
@@ -86,31 +96,24 @@
   --color-muted-foreground: var(--muted);
   --color-border: var(--line);
   --color-input: var(--line);
-  --color-ring: var(--signal);
+  --color-ring: var(--brand);
 
-  --shadow-panel: var(--shadow-panel);
   --shadow-overlay: var(--shadow-overlay);
+  --shadow-lift: var(--shadow-lift);
 
+  /* Radius by role: controls 8, panels 12, dots and pills full. */
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 10px;
+  --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-2xl: 14px;
+  --radius-2xl: 16px;
 
-  --animate-sweep: sweep 4s linear infinite;
-  --animate-ping-soft: ping-soft 2s ease-out infinite;
+  --ease-instrument: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-sweep: sweep 1.6s linear infinite;
 
   @keyframes sweep {
     to {
       transform: rotate(360deg);
-    }
-  }
-  @keyframes ping-soft {
-    0% {
-      box-shadow: 0 0 0 0 var(--signal-dim);
-    }
-    100% {
-      box-shadow: 0 0 0 12px transparent;
     }
   }
 }
@@ -137,12 +140,12 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--signal);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
 
   ::selection {
-    background: var(--signal-dim);
+    background: var(--brand-dim);
   }
 
   button:not(:disabled),
@@ -151,18 +154,49 @@
   }
 }
 
-/* Small caps label in mono, used for overlines and table headers. */
-@utility label-mono {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* Quiet label: small, muted, sentence case. Mono is kept for code-like data. */
+@utility label-quiet {
+  font-size: 13px;
+  font-weight: 450;
   color: var(--muted);
 }
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Gap marker: a triangle, so a gap reads without colour. */
+@utility tri {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* The layout switch moves each nav item between the top bar and the sidebar. */
+::view-transition-group(*) {
+  animation-duration: 0.42s;
+  animation-timing-function: var(--ease-instrument);
+}
+::view-transition-old(nav-extras) {
+  animation: 0.12s ease-out both vt-fade-out;
+}
+::view-transition-new(nav-extras) {
+  animation: 0.28s 0.2s ease-out both vt-fade-in;
+}
+::view-transition-old(app-main),
+::view-transition-new(app-main) {
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -173,5 +207,10 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

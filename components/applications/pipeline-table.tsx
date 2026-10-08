@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Clock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { DeleteApplication } from "@/components/applications/delete-application";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ function SortHeader({ column, label, sort, onSort }: {
       <button
         type="button"
         onClick={() => onSort({ key: column, ascending: active ? !sort.ascending : column === "company" })}
-        className={cn("label-mono flex items-center gap-1 hover:text-ink", active && "text-ink")}
+        className={cn("label-quiet flex items-center gap-1 hover:text-ink", active && "text-ink")}
       >
         {label}
         {active ? <Icon className="size-3" aria-hidden="true" /> : null}
@@ -78,7 +78,7 @@ export function PipelineTable({ applications, now }: { applications: Application
           <SortHeader column="company" label="Company · role" sort={sort} onSort={setSort} />
           <SortHeader column="status" label="Stage" sort={sort} onSort={setSort} />
           <SortHeader column="activity" label="Last activity" sort={sort} onSort={setSort} />
-          <span role="columnheader" className="label-mono">Added</span>
+          <span role="columnheader" className="label-quiet">Added</span>
           <span role="columnheader" className="sr-only">Actions</span>
         </div>
 
@@ -107,12 +107,12 @@ export function PipelineTable({ applications, now }: { applications: Application
               </span>
               <span
                 role="cell"
-                className={cn("flex items-center gap-1.5 text-sm max-md:row-start-2 max-md:justify-self-end", overdue ? "text-caution" : "text-muted")}
+                className={cn("flex items-center gap-2 text-sm tabular max-md:row-start-2 max-md:justify-self-end", overdue ? "font-medium text-warn-ink" : "text-muted")}
               >
-                {overdue ? <Clock className="size-3.5" aria-label="Needs a follow-up" /> : null}
+                {overdue ? <span role="img" aria-label="Needs a follow-up" className="tri inline-block h-2 w-[9px] bg-warn" /> : null}
                 {relativeDays(daysSince(lastActivity(app), now))}
               </span>
-              <span role="cell" className="hidden text-sm text-muted md:block">
+              <span role="cell" className="hidden text-sm text-muted tabular md:block">
                 {shortDate(app.createdAt)}
               </span>
               <span role="cell" className="max-md:col-start-2 max-md:row-start-1 max-md:justify-self-end">
@@ -123,7 +123,7 @@ export function PipelineTable({ applications, now }: { applications: Application
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
-                    <DropdownMenuLabel className="label-mono px-3 py-2">Move to</DropdownMenuLabel>
+                    <DropdownMenuLabel className="label-quiet px-3 py-2">Move to</DropdownMenuLabel>
                     <DropdownMenuRadioGroup
                       value={app.status}
                       onValueChange={(status) => update.mutate({ id: app.id, update: { status: status as ApplicationStatus } })}

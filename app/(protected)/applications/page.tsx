@@ -59,8 +59,8 @@ function PipelinePage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Pipeline</h1>
-          <p className="text-muted">{isLoading ? "Loading…" : `${plural(all.length, "application")} tracked`}</p>
+          <h1 className="text-3xl font-semibold tracking-[-0.025em]">Pipeline</h1>
+          <p className="text-ink-soft tabular">{isLoading ? "Loading…" : `${plural(all.length, "application")} tracked`}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <CSVImport />
@@ -99,8 +99,8 @@ function PipelinePage() {
                     {f.label}
                     <span
                       className={cn(
-                        "font-mono text-xs",
-                        f.id === "follow-up" && count ? "text-caution" : "text-muted"
+                        "text-xs tabular",
+                        f.id === "follow-up" && count ? "font-semibold text-warn-ink" : "text-muted"
                       )}
                     >
                       {count}

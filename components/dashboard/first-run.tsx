@@ -17,8 +17,8 @@ export function FirstRun() {
       <div className="grid items-center gap-10 p-8 md:grid-cols-[minmax(0,1fr)_280px] md:p-12">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <span className="label-mono text-signal">Getting started</span>
-            <h2 className="text-3xl font-semibold tracking-tight">Put your first application on the radar.</h2>
+            <span className="label-quiet text-brand">Getting started</span>
+            <h2 className="text-3xl font-semibold tracking-[-0.025em]">Put your first application on the radar.</h2>
             <p className="max-w-lg text-muted">
               Add a role you’ve applied for, or import the spreadsheet you already keep. DevRadar tracks where each one stands
               and tells you when it’s time to follow up.

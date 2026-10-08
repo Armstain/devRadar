@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 const sizes = {
   sm: "size-[22px] rounded-md text-[11px]",
   md: "size-8 rounded-lg text-sm",
-  lg: "size-14 rounded-2xl text-2xl",
+  lg: "size-14 rounded-xl text-2xl",
 }
 
 // A company's initial on a neutral tile; decorative, so hidden from screen readers.

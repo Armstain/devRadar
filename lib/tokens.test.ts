@@ -29,8 +29,13 @@ describe("design tokens", () => {
             }
         });
 
-        it(`text on the signal fill passes WCAG AA (${theme})`, () => {
-            expect(contrast(tokens[theme]["signal-ink"], tokens[theme].signal)).toBeGreaterThanOrEqual(4.5);
+        it(`text on the brand fill passes WCAG AA (${theme})`, () => {
+            expect(contrast(tokens[theme]["brand-ink"], tokens[theme].brand)).toBeGreaterThanOrEqual(4.5);
+        });
+
+        it(`gap markers stay visible: warn on ground with an ink outline (${theme})`, () => {
+            // The warn fill is a mark, not text; it carries an outline and a label.
+            expect(contrast(tokens[theme].warn, tokens[theme].ground)).toBeGreaterThanOrEqual(theme === "dark" ? 3 : 1.5);
         });
     }
 

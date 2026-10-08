@@ -6,7 +6,7 @@ const CELL = 11
 const STEP = 14
 const TOP = 18
 
-const levelClass = ["fill-raised", "fill-signal/25", "fill-signal/45", "fill-signal/70", "fill-signal"]
+const levelClass = ["fill-raised", "fill-brand/25", "fill-brand/45", "fill-brand/70", "fill-brand"]
 
 // A year of contributions, one square per day. Levels are quartiles of the
 // active days; the legend explains them and every square has a tooltip.
@@ -34,7 +34,7 @@ export function ContributionHeatmap({
         className="h-auto w-full"
       >
         {months.map((m) => (
-          <text key={`${m.week}-${m.label}`} x={m.week * STEP} y={11} className="fill-muted font-mono text-[10px]">
+          <text key={`${m.week}-${m.label}`} x={m.week * STEP} y={11} className="fill-muted text-[10px]">
             {m.label}
           </text>
         ))}
@@ -53,13 +53,13 @@ export function ContributionHeatmap({
         ))}
       </svg>
       <div className="flex items-center justify-end gap-1.5 text-[11px] text-muted" aria-hidden="true">
-        <span className="mr-1 font-mono">Less</span>
+        <span className="mr-1">Less</span>
         {levelClass.map((cls) => (
           <svg key={cls} viewBox="0 0 11 11" className="size-[11px]">
             <rect width="11" height="11" rx="2.5" className={cls} />
           </svg>
         ))}
-        <span className="ml-1 font-mono">More</span>
+        <span className="ml-1">More</span>
       </div>
     </div>
   )

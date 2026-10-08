@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Check, Clock, ExternalLink, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, ExternalLink, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { DeleteApplication } from "@/components/applications/delete-application";
 import { FitCard } from "@/components/fit/fit-card";
@@ -40,7 +40,7 @@ function StageStepper({ app }: { app: Application }) {
                 aria-current={current ? "step" : undefined}
                 className={cn(
                   "group flex w-full flex-col items-start gap-2 border-t-[3px] pt-3 text-left transition-colors disabled:cursor-default",
-                  done || current ? "border-signal" : "border-line hover:border-muted"
+                  done || current ? "border-brand" : "border-line hover:border-muted"
                 )}
               >
                 <span className={cn("flex items-center gap-2 font-semibold", !done && !current && "text-muted group-hover:text-ink")}>
@@ -48,8 +48,8 @@ function StageStepper({ app }: { app: Application }) {
                     aria-hidden="true"
                     className={cn(
                       "flex size-[18px] items-center justify-center rounded-full",
-                      done && "bg-signal text-signal-ink",
-                      current && "bg-signal shadow-[inset_0_0_0_3px_var(--ground)] ring-2 ring-signal",
+                      done && "bg-brand text-brand-ink",
+                      current && "bg-brand shadow-[inset_0_0_0_3px_var(--ground)] ring-2 ring-brand",
                       !done && !current && "border-[1.5px] border-muted"
                     )}
                   >
@@ -174,7 +174,7 @@ export default function ApplicationDetailPage() {
             <span className="font-medium text-ink">{app.company}</span>
             <span>Added {shortDate(app.createdAt)}</span>
             {app.link ? (
-              <a href={app.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-signal hover:underline">
+              <a href={app.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand hover:underline">
                 Job post <ExternalLink className="size-3.5" aria-hidden="true" />
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
@@ -199,7 +199,7 @@ export default function ApplicationDetailPage() {
             <PanelHeader
               title="Notes"
               action={
-                <button type="button" onClick={() => setEditing(true)} className="text-[13px] text-signal hover:underline">
+                <button type="button" onClick={() => setEditing(true)} className="text-[13px] text-brand hover:underline">
                   {app.notes ? "Edit" : "Add notes"}
                 </button>
               }
@@ -214,10 +214,10 @@ export default function ApplicationDetailPage() {
 
         <aside className="flex flex-col gap-6 lg:col-span-5">
           {app.jobPostId ? <FitCard jobPostId={app.jobPostId} /> : null}
-          <Panel className={cn(step.urgent && "border-caution/40")}>
+          <Panel className={cn(step.urgent && "border-warn bg-warn-soft")}>
             <div className="flex flex-col gap-2 p-6">
-              <span className={cn("label-mono flex items-center gap-1.5", step.urgent && "text-caution")}>
-                {step.urgent ? <Clock className="size-3.5" aria-hidden="true" /> : null}
+              <span className={cn("label-quiet flex items-center gap-1.5", step.urgent && "text-warn-ink")}>
+                {step.urgent ? <span aria-hidden="true" className="tri inline-block h-2 w-[9px] bg-warn" /> : null}
                 Next step
               </span>
               <p className="text-lg font-semibold">{step.title}</p>
@@ -234,13 +234,13 @@ export default function ApplicationDetailPage() {
                     <span className="flex w-3 flex-col items-center">
                       <span
                         aria-hidden="true"
-                        className={cn("mt-1.5 size-2.5 rounded-full", i === 0 ? "bg-signal" : "border-[1.5px] border-muted")}
+                        className={cn("mt-1.5 size-2.5 rounded-full", i === 0 ? "bg-brand" : "border-[1.5px] border-muted")}
                       />
                       {i < list.length - 1 ? <span className="mt-1 w-px flex-1 bg-line" /> : null}
                     </span>
                     <span className="flex flex-col pb-4">
                       <span className="font-medium">{event.title}</span>
-                      <span className="font-mono text-xs text-muted">
+                      <span className="text-xs text-muted tabular">
                         {shortDate(event.when)} · {relativeDays(daysSince(new Date(event.when), now))}
                       </span>
                     </span>

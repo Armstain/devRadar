@@ -79,7 +79,7 @@ export function CSVImport({ size = "md" }: { size?: "md" | "lg" }) {
       <Button
         variant="secondary"
         size={size}
-        className="cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-signal"
+        className="cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-brand"
         disabled={isUploading}
         asChild
       >

@@ -9,7 +9,7 @@ const DAYS = 30
 
 // Daily GitHub contributions for the last 30 days, from the stored snapshot.
 // Only rendered once a profile exists; the radar card handles the prompt.
-export function ActivityCard() {
+export function ActivityCard({ className }: { className?: string }) {
   const { data: state } = useGithubProfile()
   const hydrated = useHydrated()
   const profile = state?.profile
@@ -20,12 +20,12 @@ export function ActivityCard() {
   const total = series.reduce((sum, d) => sum + d.count, 0)
 
   return (
-    <Panel>
-      <div className="flex flex-col gap-5 p-6">
+    <Panel className={className}>
+      <div className="flex h-full flex-col gap-5 p-6">
         <PanelHeader
           title="Shipping activity"
           action={
-            <span className="font-mono text-[13px] text-muted">
+            <span className="text-[13px] text-muted tabular">
               Last {DAYS} days · {total} contributions · {profile.activity.currentStreak}d streak
             </span>
           }
@@ -33,14 +33,14 @@ export function ActivityCard() {
         <div
           role="img"
           aria-label={`${total} contributions in the last ${DAYS} days; busiest day had ${max}.`}
-          className="flex h-20 items-end gap-[3px]"
+          className="flex min-h-24 flex-1 items-end gap-[3px]"
         >
           {series.map((day, i) => (
             <span
               key={day.date}
               title={`${shortDate(day.date)}: ${day.count}`}
-              className={i === series.length - 1 ? "flex-1 rounded-[2px] bg-signal" : "flex-1 rounded-[2px] bg-signal-dim"}
-              style={{ height: `${Math.max(4, (day.count / max) * 80)}px` }}
+              className={i === series.length - 1 ? "flex-1 rounded-[2px] bg-brand" : "flex-1 rounded-[2px] bg-brand-dim"}
+              style={{ height: `${Math.max(4, (day.count / max) * 100)}%` }}
             />
           ))}
         </div>

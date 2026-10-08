@@ -1,33 +1,40 @@
-// Signal colour tokens. app/globals.css declares the same values as CSS
+// Instrument colour tokens. app/globals.css declares the same values as CSS
 // variables (CSS can't import TypeScript); lib/tokens.test.ts keeps the two in
-// sync. Used where literal colours are needed: Clerk's UI and the /design page.
+// sync. Used where literal colours are needed: Clerk's UI, the social image
+// and the /design page.
 
 export type ThemeName = "light" | "dark";
 
 export const tokens = {
     light: {
-        ground: "#f4f5f2",
-        panel: "#ffffff",
-        raised: "#eceeeb",
-        line: "#dadfda",
-        ink: "#0e1310",
-        muted: "#545f58",
-        signal: "#0b7a4e",
-        "signal-ink": "#ffffff",
-        caution: "#9a5b00",
-        danger: "#b42318",
+        ground: "#f4f5f4",
+        panel: "#fbfbfa",
+        raised: "#eaecea",
+        line: "#dadcdb",
+        scope: "#d2d5d3",
+        ink: "#141515",
+        "ink-soft": "#3a3c3c",
+        muted: "#5f6262",
+        brand: "#00769e",
+        "brand-ink": "#ffffff",
+        warn: "#fab219",
+        "warn-ink": "#8a5500",
+        danger: "#b8312b",
     },
     dark: {
-        ground: "#0a0d0b",
-        panel: "#111512",
-        raised: "#1a201c",
-        line: "#232a26",
-        ink: "#e6ebe7",
-        muted: "#8e9a93",
-        signal: "#3ddc97",
-        "signal-ink": "#03130b",
-        caution: "#f5a524",
-        danger: "#f97066",
+        ground: "#141413",
+        panel: "#1b1c1b",
+        raised: "#242625",
+        line: "#2e302f",
+        scope: "#333634",
+        ink: "#ebecea",
+        "ink-soft": "#c2c4c2",
+        muted: "#8d908e",
+        brand: "#2a9fc8",
+        "brand-ink": "#0c1214",
+        warn: "#fab219",
+        "warn-ink": "#f5b544",
+        danger: "#f07167",
     },
 } as const satisfies Record<ThemeName, Record<string, string>>;
 
@@ -35,14 +42,17 @@ export type TokenName = keyof (typeof tokens)["light"];
 
 export const tokenRoles: { name: TokenName; label: string; use: string; text: boolean }[] = [
     { name: "ground", label: "Ground", use: "Page background", text: false },
-    { name: "panel", label: "Panel", use: "Cards and dialogs", text: false },
-    { name: "raised", label: "Raised", use: "Hover, chips, tracks", text: false },
-    { name: "line", label: "Line", use: "Borders and dividers", text: false },
+    { name: "panel", label: "Panel", use: "Set-apart surfaces", text: false },
+    { name: "raised", label: "Raised", use: "Hover, tracks, chips", text: false },
+    { name: "line", label: "Line", use: "Hairlines and borders", text: false },
+    { name: "scope", label: "Scope", use: "Dial bezel and outer ring", text: false },
     { name: "ink", label: "Ink", use: "Primary text", text: true },
-    { name: "muted", label: "Muted", use: "Secondary text", text: true },
-    { name: "signal", label: "Signal", use: "The one thing that matters now", text: true },
-    { name: "caution", label: "Caution", use: "Gaps and overdue items", text: true },
-    { name: "danger", label: "Danger", use: "Destructive actions", text: true },
+    { name: "ink-soft", label: "Ink soft", use: "Body copy", text: true },
+    { name: "muted", label: "Muted", use: "Labels and secondary text", text: true },
+    { name: "brand", label: "Petrol", use: "Your data and the next action", text: true },
+    { name: "warn", label: "Warning", use: "Gap markers, always with an icon", text: false },
+    { name: "warn-ink", label: "Warning text", use: "Words about a gap", text: true },
+    { name: "danger", label: "Danger", use: "Failures and destructive actions", text: true },
 ];
 
 function luminance(hex: string): number {

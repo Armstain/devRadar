@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
+import { IBM_Plex_Mono, Schibsted_Grotesk } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -12,9 +12,11 @@ const grotesk = Schibsted_Grotesk({
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
+// Only for code-like data: repository names, file names, URLs, shortcuts.
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains",
+  weight: ["400", "500"],
+  variable: "--font-plex",
   display: "swap",
 });
 
@@ -31,8 +33,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0d0b" },
-    { media: "(prefers-color-scheme: light)", color: "#f4f5f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#141413" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f4" },
   ],
 };
 
@@ -53,7 +55,7 @@ export default function RootLayout({
     >
       <html suppressHydrationWarning lang="en" className={`${grotesk.variable} ${mono.variable}`}>
         <body>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <QueryProvider>{children}</QueryProvider>
             <Toaster
               position="bottom-right"
@@ -66,7 +68,7 @@ export default function RootLayout({
                   borderRadius: 12,
                   fontSize: 14,
                 },
-                success: { iconTheme: { primary: "var(--signal)", secondary: "var(--signal-ink)" } },
+                success: { iconTheme: { primary: "var(--brand)", secondary: "var(--brand-ink)" } },
                 error: { iconTheme: { primary: "var(--danger)", secondary: "var(--panel)" } },
               }}
             />

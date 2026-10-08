@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { SignIn, SignUp } from "@clerk/nextjs";
 import { Logo } from "@/components/logo";
-import { Scope } from "@/components/scope";
+import { SAMPLE_AXES, SAMPLE_GAP, SAMPLE_LABEL } from "@/components/landing/sample";
+import { RadarChart } from "@/components/radar-chart";
 import { useClerkAppearance } from "@/lib/clerk-appearance";
 
 export function AuthFrame({ mode }: { mode: "sign-in" | "sign-up" }) {
@@ -21,12 +22,16 @@ export function AuthFrame({ mode }: { mode: "sign-in" | "sign-up" }) {
       </div>
       <aside className="relative hidden overflow-hidden border-l border-line bg-panel lg:flex lg:flex-col lg:justify-center lg:gap-10 lg:p-16">
         <div className="flex max-w-md flex-col gap-3">
-          <span className="label-mono text-signal">Skill radar for developers</span>
-          <p className="text-3xl font-semibold leading-tight tracking-tight">
-            {mode === "sign-in" ? "Welcome back. Your pipeline’s been waiting." : "See your skills the way a hiring manager will."}
+          <p className="text-3xl font-semibold leading-tight tracking-[-0.03em]">
+            {mode === "sign-in" ? "Welcome back. Your pipeline’s been waiting." : "Which jobs does your code already qualify you for?"}
+          </p>
+          <p className="text-ink-soft">
+            {mode === "sign-in"
+              ? "Pick up where you left off: follow-ups, fit reports and interview prep."
+              : "Connect GitHub, paste a job post, and see every requirement checked against what you’ve shipped."}
           </p>
         </div>
-        <Scope className="max-w-[420px]" />
+        <RadarChart axes={SAMPLE_AXES} gap={SAMPLE_GAP} label={SAMPLE_LABEL} className="ml-0 max-w-[460px]" />
       </aside>
     </div>
   );

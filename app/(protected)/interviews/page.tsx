@@ -49,8 +49,8 @@ export default function InterviewPrepPage() {
   return (
     <div className="flex flex-col gap-7">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Interview prep</h1>
-        <p className="max-w-2xl text-muted">
+        <h1 className="text-3xl font-semibold tracking-[-0.025em]">Interview prep</h1>
+        <p className="max-w-2xl text-ink-soft">
           Practice questions for any topic, with what the interviewer is listening for and the points a strong answer covers.
         </p>
       </header>
@@ -95,7 +95,7 @@ export default function InterviewPrepPage() {
                 max={10}
                 value={count}
                 onChange={(e) => setCount(Math.min(10, Math.max(1, Number(e.target.value) || 1)))}
-                className="font-mono"
+                className="tabular"
               />
             </Field>
           </div>
@@ -132,7 +132,7 @@ export default function InterviewPrepPage() {
         ) : result ? (
           <Panel>
             <article className="mx-auto max-w-3xl p-8">
-              <span className="label-mono">{result.topic}</span>
+              <span className="label-quiet">{result.topic}</span>
               <div className="mt-4">
                 <Markdown>{result.text}</Markdown>
               </div>

@@ -45,7 +45,7 @@ export default function SkillProfilePage() {
   if (!state.profile) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Skill profile</h1>
+        <h1 className="text-3xl font-semibold tracking-[-0.025em]">Skill profile</h1>
         <Panel>
           {state.status === "failed" ? (
             <SyncFailed state={state} />
@@ -78,7 +78,7 @@ function ProfileActions({ state }: { state: GithubProfileState }) {
 
   return (
     <>
-      <span className="font-mono text-[13px] text-muted" aria-live="polite">
+      <span className="text-[13px] text-muted" aria-live="polite">
         {syncing ? "Syncing…" : state.syncedAt && hydrated ? `Synced ${timeAgo(state.syncedAt)}` : null}
       </span>
       <Button variant="secondary" size="sm" onClick={() => sync.mutate()} disabled={syncing}>
@@ -99,14 +99,14 @@ function ProfileActions({ state }: { state: GithubProfileState }) {
 
 function FailureBanner({ message }: { message: string }) {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-xl border border-caution/40 bg-caution-soft px-4 py-3 text-sm">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-caution" aria-hidden="true" />
+    <div role="alert" className="flex items-start gap-3 rounded-xl border border-warn/40 bg-warn-soft px-4 py-3 text-sm">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn-ink" aria-hidden="true" />
       <p>
         The last sync failed: {message} Showing the previous results.
         {/reconnect/i.test(message) ? (
           <>
             {" "}
-            <a href="/api/auth/github" className="font-medium text-signal hover:underline">
+            <a href="/api/auth/github" className="font-medium text-brand hover:underline">
               Reconnect GitHub
             </a>
           </>
@@ -120,7 +120,7 @@ function SyncFailed({ state }: { state: GithubProfileState }) {
   const sync = useSyncGithub();
   return (
     <div className="flex flex-col items-start gap-4 p-8">
-      <AlertTriangle className="size-6 text-caution" aria-hidden="true" />
+      <AlertTriangle className="size-6 text-warn-ink" aria-hidden="true" />
       <div className="flex flex-col gap-1">
         <p className="text-lg font-semibold">The sync didn’t finish</p>
         <p className="max-w-lg text-muted">{state.error ?? "Something went wrong while reading GitHub."}</p>
@@ -157,7 +157,7 @@ function FirstSync() {
 function ConnectPrompt() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold tracking-tight">Skill profile</h1>
+      <h1 className="text-3xl font-semibold tracking-[-0.025em]">Skill profile</h1>
       <Panel>
         <div className="grid items-center gap-10 p-8 md:grid-cols-[minmax(0,1fr)_260px] md:p-12">
           <div className="flex flex-col gap-4">

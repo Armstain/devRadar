@@ -1,89 +1,96 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { Menu, Plus, Search } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { CommandMenu } from "@/components/app-shell/command-menu";
-import { Sidebar } from "@/components/app-shell/sidebar";
-import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
+import type { LayoutMode } from "@/components/app-shell/layout-mode";
+import { modKey as detectModKey, useLayoutMode } from "@/components/app-shell/use-layout-mode";
+import { Nav } from "@/components/app-shell/sidebar";
+import { StatusBar } from "@/components/app-shell/status-bar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Kbd } from "@/components/ui/kbd";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { cn } from "@/lib/utils";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+const isTyping = (target: EventTarget | null) =>
+  target instanceof HTMLElement && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName));
+
+// The app frame: one nav that sits on top or down the side (⌘B / Ctrl+B),
+// the page, and an editor-style status bar along the bottom.
+export function AppShell({ initialLayout, children }: { initialLayout: LayoutMode; children: React.ReactNode }) {
+  const { layout, toggle } = useLayoutMode(initialLayout);
   const [commandOpen, setCommandOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const hydrated = useHydrated();
+  const mod = hydrated ? detectModKey() : "⌘";
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "k") {
         event.preventDefault();
         setCommandOpen((open) => !open);
+      } else if (key === "b" && !isTyping(event.target) && window.matchMedia("(min-width: 1024px)").matches) {
+        event.preventDefault();
+        toggle();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [toggle]);
 
   const openAdd = useCallback(() => setAddOpen(true), []);
+  const openSearch = useCallback(() => setCommandOpen(true), []);
 
   return (
-    <div className="flex min-h-dvh">
+    <div
+      data-layout={layout}
+      className={cn(
+        "grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] [grid-template-areas:'nav'_'main'_'status']",
+        layout === "side" &&
+          "lg:grid-cols-[248px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:[grid-template-areas:'nav_main'_'status_status']"
+      )}
+    >
       <a
         href="#main"
-        className="sr-only z-50 rounded-lg bg-signal px-4 py-2 font-semibold text-signal-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="sr-only z-50 rounded-lg bg-brand px-4 py-2 font-semibold text-brand-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
       >
         Skip to content
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-y-auto border-r border-line lg:block">
+      <div className={cn("min-w-0 [grid-area:nav]", layout === "side" ? "border-b border-line lg:border-b-0 lg:border-r" : "border-b border-line")}>
         <Suspense>
-          <Sidebar />
+          <Nav
+            layout={hydrated ? layout : initialLayout}
+            modKey={mod}
+            onToggleLayout={toggle}
+            onSearch={openSearch}
+            onAdd={openAdd}
+            onMenu={() => setNavOpen(true)}
+          />
         </Suspense>
-      </aside>
+      </div>
 
       <Dialog open={navOpen} onOpenChange={setNavOpen}>
         <DialogContent side="left" aria-describedby={undefined}>
           <DialogTitle className="sr-only">Navigation</DialogTitle>
           <Suspense>
-            <Sidebar onNavigate={() => setNavOpen(false)} />
+            <Nav layout="side" mode="drawer" modKey={mod} onSearch={openSearch} onAdd={openAdd} onNavigate={() => setNavOpen(false)} />
           </Suspense>
         </DialogContent>
       </Dialog>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-ground/85 px-4 py-3 backdrop-blur-md sm:px-6 lg:border-b-0 lg:bg-ground lg:px-10 lg:pt-5 lg:backdrop-blur-none">
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" onClick={() => setNavOpen(true)}>
-            <Menu aria-hidden="true" />
-          </Button>
-          <Link href="/dashboard" className="lg:hidden" aria-label="DevRadar home">
-            <Logo className="[&>span:last-child]:hidden sm:[&>span:last-child]:inline" />
-          </Link>
-          <button
-            type="button"
-            onClick={() => setCommandOpen(true)}
-            className="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-lg border border-line bg-panel px-3.5 text-left text-[15px] text-muted transition-colors hover:border-muted/50 sm:max-w-md"
-          >
-            <Search className="size-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">Search applications, pages…</span>
-            <Kbd className="ml-auto hidden sm:inline">⌘K</Kbd>
-          </button>
-          <span className="hidden flex-1 sm:block" />
-          <ApplicationDialog open={addOpen} onOpenChange={setAddOpen} trigger={null} />
-          <Button onClick={openAdd} className="max-sm:px-3">
-            <Plus aria-hidden="true" />
-            <span className="max-sm:sr-only">Add application</span>
-          </Button>
-        </header>
+      <main id="main" className="min-w-0 overflow-y-auto [grid-area:main] [view-transition-name:app-main]">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pt-8">{children}</div>
+      </main>
 
-        <main id="main" className="flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-10">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
-        </main>
+      <div className="[grid-area:status]">
+        <StatusBar layout={layout} modKey={mod} onCommand={openSearch} onToggleLayout={toggle} />
       </div>
 
-      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} onAddApplication={openAdd} />
+      <ApplicationDialog open={addOpen} onOpenChange={setAddOpen} trigger={null} />
+      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} onAddApplication={openAdd} onToggleLayout={toggle} layout={layout} />
     </div>
   );
 }
