@@ -29,20 +29,25 @@ export const POST = authed("job-posts.create", async (request, { db, userId, log
         });
     }
 
+    const started = performance.now();
+    let result;
     try {
-        const started = performance.now();
-        const { extraction, dropped, model } = await extract(parsed.data.text);
-        log.info(
-            { model, requirements: extraction.requirements.length, dropped: dropped.length, ms: Math.round(performance.now() - started) },
-            "extracted job post"
-        );
-        const view = await createJobPost(db, userId, { ...parsed.data, extraction, model });
-        return json(view, 201);
+        result = await extract(parsed.data.text);
     } catch (error) {
         if (error instanceof ExtractionError) {
             log.warn({ err: error }, "job post extraction failed");
             return errorResponse("Couldn’t read that job post. Try pasting just the post itself.", 422);
         }
-        throw error;
+        // Gemini API failures (bad key, quota, unknown model) land here
+        log.error({ err: error }, "job post model call failed");
+        return errorResponse("Job post analysis is unavailable right now. Please try again later.", 502);
     }
+
+    const { extraction, dropped, model } = result;
+    log.info(
+        { model, requirements: extraction.requirements.length, dropped: dropped.length, ms: Math.round(performance.now() - started) },
+        "extracted job post"
+    );
+    const view = await createJobPost(db, userId, { ...parsed.data, extraction, model });
+    return json(view, 201);
 });
