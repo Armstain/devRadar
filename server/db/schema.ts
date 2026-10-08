@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, jsonb, pgEnum, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { APPLICATION_STATUSES } from "@/lib/applications";
 import type { JobExtraction } from "@/lib/job-posts";
 import type { GithubSnapshot } from "@/lib/skills/types";
@@ -11,7 +11,7 @@ const timestamps = {
 
 export const applicationStatus = pgEnum("application_status", APPLICATION_STATUSES);
 
-export const applicationEventType = pgEnum("application_event_type", ["created", "status_changed"]);
+export const applicationEventType = pgEnum("application_event_type", ["created", "status_changed", "followed_up", "snoozed"]);
 
 // One row per Clerk user, created on first use. Deleting it cascades to all
 // of the user's data (see the Clerk webhook).
@@ -72,6 +72,10 @@ export const applications = pgTable(
         status: applicationStatus("status").notNull().default("applied"),
         link: text("link").notNull().default(""),
         notes: text("notes").notNull().default(""),
+        // The last time the user said they chased this application
+        followedUpAt: timestamp("followed_up_at", { withTimezone: true }),
+        // No follow-up reminder before this date
+        snoozedUntil: timestamp("snoozed_until", { withTimezone: true }),
         ...timestamps,
     },
     (t) => [index("applications_user_updated_idx").on(t.userId, t.updatedAt.desc())]
@@ -123,6 +127,31 @@ export const jobPosts = pgTable(
     (t) => [index("job_posts_user_created_idx").on(t.userId, t.createdAt.desc())]
 );
 
+// One row each time an application becomes due for a follow-up, written by a
+// daily job. The due date is part of the key, so the job can run any number
+// of times without repeating a reminder, and a later quiet spell gets a new
+// one. `seenAt` drives the "new" markers; an email digest can later read the
+// same rows.
+export const followUpReminders = pgTable(
+    "follow_up_reminders",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        applicationId: uuid("application_id")
+            .notNull()
+            .references(() => applications.id, { onDelete: "cascade" }),
+        dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+        seenAt: timestamp("seen_at", { withTimezone: true }),
+        createdAt: timestamps.createdAt,
+    },
+    (t) => [
+        unique("follow_up_reminders_application_due_unique").on(t.applicationId, t.dueAt),
+        index("follow_up_reminders_user_idx").on(t.userId, t.seenAt),
+    ]
+);
+
 export const applicationsRelations = relations(applications, ({ many }) => ({
     events: many(applicationEvents),
 }));
@@ -133,5 +162,6 @@ export const applicationEventsRelations = relations(applicationEvents, ({ one })
 
 export type ApplicationRow = typeof applications.$inferSelect;
 export type ApplicationEventRow = typeof applicationEvents.$inferSelect;
+export type FollowUpReminderRow = typeof followUpReminders.$inferSelect;
 export type JobPostRow = typeof jobPosts.$inferSelect;
 export type GithubSnapshotRow = typeof githubSnapshots.$inferSelect;

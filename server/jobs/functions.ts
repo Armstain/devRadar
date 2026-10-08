@@ -1,4 +1,5 @@
 import { getDb } from "@/server/db/client";
+import { collectDueReminders } from "@/server/services/follow-ups";
 import { pruneScans, SCAN_TTL_MS } from "@/server/services/github-scans";
 import { findStaleSnapshots, syncGithubSnapshot } from "@/server/services/github-snapshots";
 import { deleteUserData } from "@/server/services/users";
@@ -48,4 +49,15 @@ export const refreshGithubJob = inngest.createFunction(
     }
 );
 
-export const functions = [deleteUserDataJob, syncGithubJob, refreshGithubJob];
+// Daily: record a reminder for every application that has gone quiet (or
+// whose snooze ran out) since the last run. The app shows these as "new";
+// an email digest can read the same rows later.
+export const followUpRemindersJob = inngest.createFunction(
+    { id: "collect-follow-up-reminders", triggers: [{ cron: "TZ=UTC 0 7 * * *" }] },
+    async ({ step }) => {
+        const created = await step.run("collect-due-reminders", () => collectDueReminders(getDb()));
+        return { created };
+    }
+);
+
+export const functions = [deleteUserDataJob, syncGithubJob, refreshGithubJob, followUpRemindersJob];

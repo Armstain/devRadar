@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
 import { ActivityCard } from "@/components/dashboard/activity-card";
 import { AttentionList } from "@/components/dashboard/attention-list";
@@ -8,7 +9,7 @@ import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { PipelineFunnel } from "@/components/dashboard/pipeline-funnel";
 import { SkillRadarCard } from "@/components/dashboard/skill-radar-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useApplications } from "@/hooks/use-applications";
+import { useApplications, useMarkRemindersSeen, useReminders } from "@/hooks/use-applications";
 import { dateLine, greeting, plural } from "@/lib/format";
 import { pipelineStats, type PipelineStats } from "@/lib/pipeline";
 
@@ -38,6 +39,17 @@ export default function DashboardPage() {
   const now = new Date();
   const stats = pipelineStats(applications ?? [], now);
   const name = user?.firstName;
+
+  // Reminders that arrived since the last visit get a "New" marker, and
+  // seeing them here counts as seen.
+  const { data: reminders } = useReminders();
+  const markSeen = useMarkRemindersSeen();
+  const fresh = useMemo(() => new Set((reminders ?? []).map((r) => r.applicationId)), [reminders]);
+  const { mutate: markRemindersSeen } = markSeen;
+  const unseen = reminders?.length ?? 0;
+  useEffect(() => {
+    if (unseen) markRemindersSeen();
+  }, [unseen, markRemindersSeen]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -69,7 +81,7 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid gap-6 lg:grid-cols-12">
-            <AttentionList applications={applications ?? []} now={now} className="lg:col-span-7" />
+            <AttentionList applications={applications ?? []} now={now} fresh={fresh} className="lg:col-span-7" />
             <SkillRadarCard className="lg:col-span-5" />
           </div>
           <KpiStrip stats={stats} />

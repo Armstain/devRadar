@@ -25,6 +25,7 @@ const { GET: list, POST: analyze } = await import("./route");
 const { GET: getPost } = await import("./[id]/route");
 const { POST: saveToPipeline } = await import("./[id]/application/route");
 const { GET: getApplication } = await import("../applications/[id]/route");
+const { GET: getInsights } = await import("../insights/route");
 
 const POST_TEXT = `Lumen Labs is hiring a Senior Full-stack Engineer (remote, EU).
 You'll build our customer dashboard end to end.
@@ -137,6 +138,17 @@ describe("job posts API", () => {
 
         const detail = await (await getApplication(request(), withId(application.id))).json();
         expect(detail.jobPostId).toBe(view.id);
+    });
+
+    it("feeds the fit score of saved posts into the insights", async () => {
+        await connectGithub(session.userId!);
+        const view = await (await analyze(request({ text: POST_TEXT }), noParams)).json();
+        await saveToPipeline(request({}), withId(view.id));
+
+        const insights = await (await getInsights(request(), noParams)).json();
+        expect(insights.total).toBe(1);
+        const band = insights.byFit.find((b: { sent: number }) => b.sent === 1);
+        expect(band.band).not.toBe("unscored");
     });
 
     it("never shows one user's post to another", async () => {

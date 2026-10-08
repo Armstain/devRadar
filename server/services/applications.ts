@@ -13,7 +13,7 @@ import type {
 // Every query is scoped by userId: a user can only ever read or change their
 // own applications, whatever id they send.
 
-function toApplication(row: ApplicationRow): Application {
+export function toApplication(row: ApplicationRow): Application {
     return {
         id: row.id,
         company: row.company,
@@ -21,12 +21,14 @@ function toApplication(row: ApplicationRow): Application {
         status: row.status,
         link: row.link,
         notes: row.notes,
+        followedUpAt: row.followedUpAt?.toISOString() ?? null,
+        snoozedUntil: row.snoozedUntil?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
     };
 }
 
-function toEvent(row: ApplicationEventRow): ApplicationEvent {
+export function toEvent(row: ApplicationEventRow): ApplicationEvent {
     return {
         id: row.id,
         type: row.type,

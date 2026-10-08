@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { AlarmClockOff, ArrowDown, ArrowUp, Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { DeleteApplication } from "@/components/applications/delete-application";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Monogram } from "@/components/ui/monogram";
 import { StagePill } from "@/components/ui/stage-pill";
-import { useUpdateApplication } from "@/hooks/use-applications";
+import { useFollowUp, useUpdateApplication } from "@/hooks/use-applications";
 import { APPLICATION_STATUSES, STATUS_LABELS, type Application, type ApplicationStatus } from "@/lib/applications";
 import { shortDate } from "@/lib/format";
 import { daysSince, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline";
@@ -68,6 +68,7 @@ export function PipelineTable({ applications, now }: { applications: Application
   const [editing, setEditing] = useState<Application | null>(null);
   const [deleting, setDeleting] = useState<Application | null>(null);
   const update = useUpdateApplication();
+  const followUp = useFollowUp();
 
   const rows = sortApplications(applications, sort.key, sort.ascending);
 
@@ -123,6 +124,17 @@ export function PipelineTable({ applications, now }: { applications: Application
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
+                    {overdue ? (
+                      <>
+                        <DropdownMenuItem onSelect={() => followUp.mutate({ id: app.id, action: { action: "followed-up" } })}>
+                          <Check aria-hidden="true" /> I followed up
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => followUp.mutate({ id: app.id, action: { action: "snooze", days: 7 } })}>
+                          <AlarmClockOff aria-hidden="true" /> Snooze for a week
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    ) : null}
                     <DropdownMenuLabel className="label-quiet px-3 py-2">Move to</DropdownMenuLabel>
                     <DropdownMenuRadioGroup
                       value={app.status}

@@ -6,15 +6,16 @@ import { useParams, useRouter } from "next/navigation";
 import { Check, ExternalLink, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { DeleteApplication } from "@/components/applications/delete-application";
+import { FollowUpActions } from "@/components/applications/follow-up-actions";
 import { FitCard } from "@/components/fit/fit-card";
 import { Button } from "@/components/ui/button";
 import { Monogram } from "@/components/ui/monogram";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApplication, useUpdateApplication } from "@/hooks/use-applications";
-import { STATUS_LABELS, type Application, type ApplicationStatus, type ApplicationWithEvents } from "@/lib/applications";
+import { STATUS_LABELS, type Application, type ApplicationEvent, type ApplicationStatus, type ApplicationWithEvents } from "@/lib/applications";
 import { plural, shortDate } from "@/lib/format";
-import { daysSince, FOLLOW_UP_DAYS, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline";
+import { daysSince, FOLLOW_UP_DAYS, isSnoozed, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
 const STEPS = (["applied", "in-progress", "offer"] as const).map((status) => ({ status, label: STATUS_LABELS[status] }));
@@ -89,7 +90,16 @@ function nextStep(app: Application, now: Date) {
     return {
       urgent: true,
       title: "Send a follow-up",
-      body: `It’s been ${quiet} days without movement. A short, specific note to the recruiter keeps you on their radar.`,
+      body: app.followedUpAt
+        ? `You followed up ${relativeDays(daysSince(new Date(app.followedUpAt), now)).toLowerCase()} and it’s been quiet since. One more short note is fair; after that, let it go.`
+        : `It’s been ${quiet} days without movement. A short, specific note to the recruiter keeps you on their radar.`,
+    };
+  }
+  if (isSnoozed(app, now)) {
+    return {
+      urgent: false,
+      title: "Follow-up snoozed",
+      body: `DevRadar will remind you on ${shortDate(app.snoozedUntil!)} if nothing has moved by then.`,
     };
   }
   switch (app.status) {
@@ -108,16 +118,26 @@ function nextStep(app: Application, now: Date) {
   }
 }
 
-// Newest first: stage changes from the event history, plus the latest edit
+function eventTitle(event: ApplicationEvent): string {
+  switch (event.type) {
+    case "created":
+      return `Added as ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`;
+    case "followed_up":
+      return "Followed up";
+    case "snoozed":
+      return "Follow-up reminder snoozed";
+    default:
+      return `Moved from ${STATUS_LABELS[event.fromStatus ?? "applied"].toLowerCase()} to ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`;
+  }
+}
+
+// Newest first: the event history (stages, follow-ups), plus the latest edit
 // when it happened after the last stage change.
 function timeline(app: ApplicationWithEvents) {
   const items = [...app.events].reverse().map((event) => ({
     key: event.id,
     when: event.createdAt,
-    title:
-      event.type === "created"
-        ? `Added as ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`
-        : `Moved from ${STATUS_LABELS[event.fromStatus ?? "applied"].toLowerCase()} to ${STATUS_LABELS[event.toStatus ?? "applied"].toLowerCase()}`,
+    title: eventTitle(event),
   }));
   const lastEvent = app.events.at(-1);
   if (!lastEvent || new Date(app.updatedAt).getTime() - new Date(lastEvent.createdAt).getTime() > 60_000) {
@@ -221,7 +241,12 @@ export default function ApplicationDetailPage() {
                 Next step
               </span>
               <p className="text-lg font-semibold">{step.title}</p>
-              <p className="text-sm text-muted">{step.body}</p>
+              <p className="text-sm text-ink-soft">{step.body}</p>
+              {step.urgent ? (
+                <div className="pt-2">
+                  <FollowUpActions application={app} />
+                </div>
+              ) : null}
             </div>
           </Panel>
 

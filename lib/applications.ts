@@ -59,18 +59,34 @@ export const applicationImportSchema = z.object({
 
 export const uuidSchema = z.uuid({ error: "Invalid id" });
 
+export const SNOOZE_DAYS = [3, 7, 14] as const;
+
+// "I followed up" restarts the quiet clock; a snooze holds the reminder back
+// for a few days without pretending anything happened.
+export const followUpActionSchema = z.discriminatedUnion("action", [
+    z.object({ action: z.literal("followed-up") }),
+    z.object({
+        action: z.literal("snooze"),
+        days: z.literal(SNOOZE_DAYS),
+    }),
+]);
+
+export type FollowUpAction = z.infer<typeof followUpActionSchema>;
+
 export type ApplicationInput = z.infer<typeof applicationCreateSchema>;
 export type ApplicationUpdate = z.infer<typeof applicationUpdateSchema>;
 
 export interface Application extends ApplicationInput {
     id: string;
+    followedUpAt: string | null;
+    snoozedUntil: string | null;
     createdAt: string;
     updatedAt: string;
 }
 
 export interface ApplicationEvent {
     id: string;
-    type: "created" | "status_changed";
+    type: "created" | "status_changed" | "followed_up" | "snoozed";
     fromStatus: ApplicationStatus | null;
     toStatus: ApplicationStatus | null;
     createdAt: string;

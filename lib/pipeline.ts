@@ -11,6 +11,15 @@ export function lastActivity(app: Pick<Application, "createdAt" | "updatedAt">):
     return new Date(app.updatedAt ?? app.createdAt);
 }
 
+// When an active application is next due a follow-up: 10 days after the last
+// activity, or the end of a snooze if that's later. The daily reminders job
+// (server/services/follow-ups.ts) computes the same date in SQL.
+export function followUpDueAt(app: Pick<Application, "createdAt" | "updatedAt" | "snoozedUntil">): Date {
+    const quiet = lastActivity(app).getTime() + FOLLOW_UP_DAYS * DAY_MS;
+    const snoozed = app.snoozedUntil ? new Date(app.snoozedUntil).getTime() : 0;
+    return new Date(Math.max(quiet, snoozed));
+}
+
 export function daysSince(date: Date, now: Date): number {
     return Math.max(0, Math.floor((now.getTime() - date.getTime()) / DAY_MS));
 }
@@ -20,7 +29,11 @@ export function isActive(app: Pick<Application, "status">): boolean {
 }
 
 export function needsFollowUp(app: Application, now: Date): boolean {
-    return isActive(app) && daysSince(lastActivity(app), now) >= FOLLOW_UP_DAYS;
+    return isActive(app) && followUpDueAt(app).getTime() <= now.getTime();
+}
+
+export function isSnoozed(app: Application, now: Date): boolean {
+    return isActive(app) && Boolean(app.snoozedUntil) && new Date(app.snoozedUntil!).getTime() > now.getTime();
 }
 
 export function relativeDays(days: number): string {
