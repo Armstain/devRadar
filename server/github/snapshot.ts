@@ -200,15 +200,31 @@ export interface FetchSnapshotOptions {
     includePrivate: boolean;
     fetch?: typeof fetch;
     now?: Date;
+    // Epoch ms by which to stop asking for more pages; the snapshot then
+    // covers the repositories read so far. Keeps a request-bound scan inside
+    // the serverless time limit.
+    deadline?: number;
 }
+
+const REQUEST_TIMEOUT_MS = 25_000;
+// Don't start another page with less time than this left
+const MIN_PAGE_MS = 8_000;
 
 export type SnapshotFetcher = (options: FetchSnapshotOptions) => Promise<GithubSnapshot>;
 
-export const fetchGithubSnapshot: SnapshotFetcher = async ({ token, login, includePrivate, fetch: doFetch = fetch, now = new Date() }) => {
+export const fetchGithubSnapshot: SnapshotFetcher = async ({
+    token,
+    login,
+    includePrivate,
+    fetch: doFetch = fetch,
+    now = new Date(),
+    deadline = Infinity,
+}) => {
     const pages: RawUser[] = [];
     let cursor: string | null = null;
 
     do {
+        const left = deadline - Date.now();
         const response = await doFetch(GRAPHQL_URL, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "User-Agent": "devradar" },
@@ -216,7 +232,7 @@ export const fetchGithubSnapshot: SnapshotFetcher = async ({ token, login, inclu
                 query: SNAPSHOT_QUERY,
                 variables: { login, cursor, privacy: includePrivate ? null : "PUBLIC", first: pages.length === 0 },
             }),
-            signal: AbortSignal.timeout(25_000),
+            signal: AbortSignal.timeout(Math.max(MIN_PAGE_MS, Math.min(REQUEST_TIMEOUT_MS, left))),
         });
         if (!response.ok) throw new GithubApiError(`GitHub GraphQL responded ${response.status}`, response.status);
 
@@ -228,7 +244,7 @@ export const fetchGithubSnapshot: SnapshotFetcher = async ({ token, login, inclu
         pages.push(body.data.user);
         const { pageInfo } = body.data.user.repositories;
         cursor = pageInfo.hasNextPage ? pageInfo.endCursor : null;
-    } while (cursor && pages.length * PAGE_SIZE < MAX_REPOS);
+    } while (cursor && pages.length * PAGE_SIZE < MAX_REPOS && deadline - Date.now() >= MIN_PAGE_MS);
 
     return normalizeSnapshot(pages, { includesPrivate: includePrivate, fetchedAt: now });
 };

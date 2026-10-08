@@ -9,6 +9,9 @@ import type { GithubSnapshot, SkillProfile } from "@/lib/skills/types";
 
 // Scans of public repositories for any username, cached for a day.
 export const SCAN_TTL_MS = 24 * 60 * 60 * 1000;
+// A scan runs inside a page request, so it reads what it can in this long and
+// leaves headroom under the function's time limit (maxDuration on the page).
+export const SCAN_BUDGET_MS = 35_000;
 
 export type ScanResult =
     | { status: "ok"; profile: SkillProfile; scannedAt: string; cached: boolean }
@@ -62,13 +65,15 @@ export async function scanGithubUser(db: Database, login: string, options: ScanO
     const limit = await limiter.limit(requester);
     if (!limit.allowed) return fromCache() ?? { status: "rate-limited", retryAfterSeconds: limit.retryAfterSeconds };
 
+    const started = Date.now();
     try {
-        const data = await fetchSnapshot({ token, login, includePrivate: false, now });
+        const data = await fetchSnapshot({ token, login, includePrivate: false, now, deadline: started + SCAN_BUDGET_MS });
         await saveScan(db, data, now);
+        logger.info({ login, ms: Date.now() - started, repos: data.repos.length, of: data.repoCount }, "public GitHub scan");
         return { status: "ok", profile: buildSkillProfile(data, now), scannedAt: now.toISOString(), cached: false };
     } catch (error) {
         if (error instanceof GithubUserNotFoundError) return { status: "not-found" };
-        logger.error({ err: error, login }, "public GitHub scan failed");
+        logger.error({ err: error, login, ms: Date.now() - started }, "public GitHub scan failed");
         return fromCache() ?? { status: "unavailable" };
     }
 }

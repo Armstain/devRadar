@@ -12,13 +12,18 @@ import { Scope } from "@/components/scope";
 import { Button } from "@/components/ui/button";
 import { getDb } from "@/server/db/client";
 import { createRateLimiter } from "@/server/rate-limit";
-import { scanGithubUser } from "@/server/services/github-scans";
+import { logger } from "@/server/logger";
+import { scanGithubUser, type ScanResult } from "@/server/services/github-scans";
 import { parseGithubLogin } from "@/lib/github-login";
 import { timeAgo } from "@/lib/format";
 
 // Scans hit GitHub only on a cache miss; this caps how many a visitor can
 // trigger.
 const limiter = createRateLimiter({ prefix: "github-scan", requests: 10, window: "1 h" });
+
+// A first scan reads up to five pages of repositories from GitHub; the scan
+// itself stops after SCAN_BUDGET_MS, well inside this.
+export const maxDuration = 60;
 
 type Props = { params: Promise<{ login: string }> };
 
@@ -63,7 +68,15 @@ export default async function ScanPage({ params }: Props) {
 async function ScanResult({ login }: { login: string }) {
   const requestHeaders = await headers();
   const requester = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip") || "unknown";
-  const result = await scanGithubUser(getDb(), login, { requester, limiter, token: process.env.GITHUB_SCAN_TOKEN });
+  let result: ScanResult;
+  try {
+    result = await scanGithubUser(getDb(), login, { requester, limiter, token: process.env.GITHUB_SCAN_TOKEN });
+  } catch (error) {
+    // The database or the rate limiter failed: log it and say so, rather
+    // than breaking the whole page
+    logger.error({ err: error, login }, "scan page failed");
+    result = { status: "unavailable" };
+  }
 
   if (result.status === "not-found") {
     return <Empty title={`No GitHub user called @${login}`} body="Check the spelling, or try another username." />;

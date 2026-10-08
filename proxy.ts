@@ -12,6 +12,8 @@ const isPublicRoute = createRouteMatcher([
     // Verified by their own signatures rather than a Clerk session
     '/api/inngest',
     '/api/webhooks(.*)',
+    // Browser error reports, rate-limited per IP
+    '/api/client-errors',
 ])
 
 export const proxy = clerkMiddleware(async (auth, request) => {
