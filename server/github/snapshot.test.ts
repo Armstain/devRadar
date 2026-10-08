@@ -90,6 +90,18 @@ describe("fetchGithubSnapshot", () => {
         expect(snapshot.repos[1].pushedAt).toBe("2025-01-01T00:00:00Z");
     });
 
+    it("stops paging when the deadline is close and keeps what it has", async () => {
+        const fetch = vi
+            .fn<typeof globalThis.fetch>()
+            .mockResolvedValue(respond({ data: { user: rawUser([rawRepo("one")], { hasNextPage: true, endCursor: "c1", totalCount: 60 }) } }));
+
+        const snapshot = await fetchGithubSnapshot({ token: "t", login: "octocat", includePrivate: false, fetch, deadline: Date.now() + 2_000 });
+
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(snapshot.repos.map((r) => r.name)).toEqual(["one"]);
+        expect(snapshot.repoCount).toBe(60);
+    });
+
     it("includes private repositories only when asked", async () => {
         const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(respond({ data: { user: rawUser([]) } }));
         await fetchGithubSnapshot({ token: "t", login: "octocat", includePrivate: true, fetch });

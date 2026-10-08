@@ -44,7 +44,7 @@ describe("github snapshots", () => {
 
         const fetchSnapshot = vi.fn().mockResolvedValue(snapshot);
         expect(await syncGithubSnapshot(db, userId, { fetchSnapshot, now })).toEqual({ status: "ready", repos: 1 });
-        expect(fetchSnapshot).toHaveBeenCalledWith({ token: "gho_token", login: "octocat", includePrivate: true, now });
+        expect(fetchSnapshot).toHaveBeenCalledWith({ token: "gho_token", login: "octocat", includePrivate: true, deadline: expect.any(Number), now });
 
         const state = await getGithubProfileState(db, userId, now);
         expect(state).toMatchObject({ status: "ready", syncedAt: now.toISOString(), error: null });

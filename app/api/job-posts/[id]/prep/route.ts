@@ -4,6 +4,9 @@ import { createRateLimiter } from "@/server/rate-limit";
 import { getJobPost, getJobPostRow, savePrep } from "@/server/services/job-posts";
 import { uuidSchema } from "@/lib/applications";
 
+// Generating prep with Gemini can take longer than the default function limit
+export const maxDuration = 60;
+
 const limiter = createRateLimiter({ prefix: "job-prep", requests: 20, window: "1 h" });
 
 export const GET = authed<{ id: string }>("job-posts.prep.get", async (_request, { db, userId, params }) => {

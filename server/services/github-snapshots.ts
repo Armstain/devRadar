@@ -75,7 +75,14 @@ export async function syncGithubSnapshot(
 
     await setStatus({ status: "syncing", error: null });
     try {
-        const data = await fetchSnapshot({ token: credentials.token, login: credentials.username, includePrivate: true, now });
+        // Stops paging in time to save what it read before the job's function limit
+        const data = await fetchSnapshot({
+            token: credentials.token,
+            login: credentials.username,
+            includePrivate: true,
+            now,
+            deadline: Date.now() + 45_000,
+        });
         await setStatus({ status: "ready", data, error: null, syncedAt: now });
         return { status: "ready", repos: data.repos.length };
     } catch (error) {

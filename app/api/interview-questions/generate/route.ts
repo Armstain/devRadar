@@ -3,6 +3,9 @@ import { getGemini, getGeminiModel } from "@/lib/gemini";
 import { authed, errorResponse, json, readJson, validationError } from "@/server/http";
 import { createRateLimiter } from "@/server/rate-limit";
 
+// Gemini generation can take longer than the default function limit
+export const maxDuration = 60;
+
 const limiter = createRateLimiter({ prefix: "interview-questions", requests: 20, window: "1 h" });
 
 const requestSchema = z.object({
