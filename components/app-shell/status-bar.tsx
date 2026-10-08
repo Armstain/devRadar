@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useGithubProfile, syncInProgress } from "@/hooks/use-github";
-import { useApplications } from "@/hooks/use-applications";
+import { useApplications, useReminders } from "@/hooks/use-applications";
 import { useHydrated } from "@/hooks/use-hydrated";
 import type { LayoutMode } from "@/components/app-shell/layout-mode";
 import { timeAgo } from "@/lib/format";
@@ -25,6 +25,7 @@ export function StatusBar({
   const hydrated = useHydrated();
   const { data: github } = useGithubProfile();
   const { data: applications } = useApplications();
+  const { data: reminders } = useReminders();
   const now = new Date();
   const due = hydrated ? (applications ?? []).filter((a) => needsFollowUp(a, now)).length : 0;
   const syncing = syncInProgress(github);
@@ -65,6 +66,7 @@ export function StatusBar({
         <Link href="/applications?view=follow-up" className="inline-flex items-center gap-2 hover:text-ink">
           <span aria-hidden="true" className="tri inline-block h-2 w-[9px] bg-warn" />
           <span className="tabular">{due}</span> follow-up{due === 1 ? "" : "s"} due
+          {hydrated && reminders?.length ? <span className="font-semibold text-brand tabular">· {reminders.length} new</span> : null}
         </Link>
       ) : null}
       <span className="ml-auto flex items-center gap-4 max-sm:hidden">

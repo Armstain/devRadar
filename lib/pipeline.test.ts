@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Application } from "./applications";
-import { byPriority, daysSince, needsFollowUp, pipelineStats, relativeDays } from "./pipeline";
+import { byPriority, daysSince, isSnoozed, needsFollowUp, pipelineStats, relativeDays } from "./pipeline";
 
 const now = new Date("2026-10-06T12:00:00Z");
 const daysAgo = (n: number) => new Date(now.getTime() - n * 24 * 60 * 60 * 1000).toISOString();
@@ -13,6 +13,8 @@ const app = (status: Application["status"], createdDaysAgo: number, updatedDaysA
     status,
     link: "",
     notes: "",
+    followedUpAt: null,
+    snoozedUntil: null,
     createdAt: daysAgo(createdDaysAgo),
     updatedAt: daysAgo(updatedDaysAgo ?? createdDaysAgo),
 });
@@ -26,6 +28,17 @@ describe("needsFollowUp", () => {
 
     it("uses the latest update, not the creation date", () => {
         expect(needsFollowUp(app("applied", 30, 2), now)).toBe(false);
+    });
+
+    it("holds the reminder back while snoozed", () => {
+        const snoozed = { ...app("applied", 20), snoozedUntil: daysAgo(-3) };
+        expect(needsFollowUp(snoozed, now)).toBe(false);
+        expect(isSnoozed(snoozed, now)).toBe(true);
+        expect(needsFollowUp({ ...snoozed, snoozedUntil: daysAgo(1) }, now)).toBe(true);
+    });
+
+    it("lets a snooze end before the quiet period without bringing the reminder forward", () => {
+        expect(needsFollowUp({ ...app("applied", 4), snoozedUntil: daysAgo(1) }, now)).toBe(false);
     });
 
     it("never flags finished applications", () => {

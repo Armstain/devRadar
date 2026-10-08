@@ -1,5 +1,10 @@
+"use client"
+
 import Link from "next/link"
+import { Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Panel, PanelHeader } from "@/components/ui/panel"
+import { useFollowUp } from "@/hooks/use-applications"
 import { STATUS_LABELS, type Application } from "@/lib/applications"
 import { daysSince, lastActivity, needsFollowUp, relativeDays } from "@/lib/pipeline"
 import { cn } from "@/lib/utils"
@@ -14,7 +19,19 @@ function nextStep(app: Application, overdue: boolean): string {
 
 // What needs you: applications gone quiet first (a triangle marks each), then
 // live interviews and offers.
-export function AttentionList({ applications, now, className }: { applications: Application[]; now: Date; className?: string }) {
+export function AttentionList({
+  applications,
+  now,
+  fresh,
+  className,
+}: {
+  applications: Application[]
+  now: Date
+  // Applications whose reminder arrived since the last visit
+  fresh?: Set<string>
+  className?: string
+}) {
+  const followUp = useFollowUp()
   const overdue = applications.filter((a) => needsFollowUp(a, now)).sort((a, b) => lastActivity(a).getTime() - lastActivity(b).getTime())
   const live = applications.filter((a) => (a.status === "in-progress" || a.status === "offer") && !needsFollowUp(a, now))
   const items = [...overdue, ...live].slice(0, LIMIT)
@@ -33,10 +50,10 @@ export function AttentionList({ applications, now, className }: { applications: 
               const isOverdue = needsFollowUp(app, now)
               const days = daysSince(lastActivity(app), now)
               return (
-                <li key={app.id} className="border-t border-line first:border-t-0">
+                <li key={app.id} className="-mx-2 flex items-center gap-1 border-t border-line first:border-t-0">
                   <Link
                     href={`/applications/${app.id}`}
-                    className="-mx-2 grid grid-cols-[14px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-raised/70"
+                    className="grid min-w-0 flex-1 grid-cols-[14px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-raised/70"
                   >
                     {isOverdue ? (
                       <span aria-label="Gone quiet" className="tri inline-block h-2.5 w-[11px] bg-warn" />
@@ -44,13 +61,32 @@ export function AttentionList({ applications, now, className }: { applications: 
                       <span aria-hidden="true" className="size-[9px] rounded-full bg-brand" />
                     )}
                     <span className="flex min-w-0 flex-col">
-                      <span className="truncate font-semibold">{app.company}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="truncate font-semibold">{app.company}</span>
+                        {fresh?.has(app.id) ? (
+                          <span className="rounded-full bg-brand-soft px-1.5 py-px text-[11px] font-semibold text-brand">New</span>
+                        ) : null}
+                      </span>
                       <span className="truncate text-[13px] text-muted">
                         {app.position} · {STATUS_LABELS[app.status].toLowerCase()} · {nextStep(app, isOverdue)}
                       </span>
                     </span>
                     <span className={cn("text-[13px] tabular", isOverdue ? "font-semibold text-warn-ink" : "text-ink-soft")}>{relativeDays(days)}</span>
                   </Link>
+                  {isOverdue ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Mark ${app.company} as followed up`}
+                      title="I followed up"
+                      disabled={followUp.isPending}
+                      onClick={() => followUp.mutate({ id: app.id, action: { action: "followed-up" } })}
+                    >
+                      <Check aria-hidden="true" />
+                    </Button>
+                  ) : (
+                    <span className="w-9 shrink-0" aria-hidden="true" />
+                  )}
                 </li>
               )
             })}

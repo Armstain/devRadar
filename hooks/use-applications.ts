@@ -8,6 +8,7 @@ import type {
     ApplicationInput,
     ApplicationUpdate,
     ApplicationWithEvents,
+    FollowUpAction,
 } from "@/lib/applications";
 
 export const applicationsKey = ["applications"] as const;
@@ -78,6 +79,53 @@ export function useDeleteApplication() {
             queryClient.removeQueries({ queryKey: applicationKey(id) });
             queryClient.invalidateQueries({ queryKey: applicationsKey, exact: true });
         },
+    });
+}
+
+const remindersKey = ["follow-up-reminders"] as const;
+
+const SNOOZE_LABELS: Record<number, string> = { 3: "three days", 7: "a week", 14: "two weeks" };
+
+// "I followed up" or a snooze. The server answers with the updated
+// application, which replaces the cached copy in the list.
+export function useFollowUp() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, action }: { id: string; action: FollowUpAction }) =>
+            (await axios.post<Application>(`/api/applications/${id}/follow-up`, action)).data,
+        onSuccess: (app, { action }) => {
+            queryClient.setQueryData<Application[]>(applicationsKey, (apps) => apps?.map((a) => (a.id === app.id ? app : a)));
+            queryClient.invalidateQueries({ queryKey: applicationsKey });
+            queryClient.invalidateQueries({ queryKey: remindersKey });
+            toast.success(
+                action.action === "followed-up"
+                    ? `Noted. DevRadar will check on ${app.company} again in 10 days.`
+                    : `Snoozed for ${SNOOZE_LABELS[action.days]}.`
+            );
+        },
+        onError: () => toast.error("Couldn’t save that. Please try again."),
+    });
+}
+
+export interface Reminder {
+    applicationId: string;
+    dueAt: string;
+}
+
+// Follow-ups that became due since the user last looked (written by the
+// daily reminders job).
+export function useReminders() {
+    return useQuery({
+        queryKey: remindersKey,
+        queryFn: async () => (await axios.get<Reminder[]>("/api/follow-ups/reminders")).data,
+    });
+}
+
+// Doesn't refetch on success: the "new" markers stay for the rest of this
+// visit and are gone on the next one.
+export function useMarkRemindersSeen() {
+    return useMutation({
+        mutationFn: async () => (await axios.post<{ seen: number }>("/api/follow-ups/reminders")).data,
     });
 }
 

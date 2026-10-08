@@ -14,6 +14,9 @@ vi.mock("@/server/db/client", () => ({ getDb: () => db }));
 const { GET: list, POST: create } = await import("./route");
 const { GET: get, PATCH: patch, DELETE: remove } = await import("./[id]/route");
 const { POST: importApps } = await import("./import/route");
+const { POST: followUp } = await import("./[id]/follow-up/route");
+const { GET: reminders, POST: markSeen } = await import("../follow-ups/reminders/route");
+const { collectDueReminders } = await import("@/server/services/follow-ups");
 
 beforeAll(async () => {
     db = await createTestDb();
@@ -93,5 +96,39 @@ describe("applications API", () => {
 
         const bad = await importApps(jsonRequest("POST", { applications: [...rows, { company: "" }] }), noParams);
         expect(bad.status).toBe(400);
+    });
+
+    it("records a follow-up or a snooze, and validates the action", async () => {
+        const { id } = await createOne();
+        const done = await followUp(jsonRequest("POST", { action: "followed-up" }), withId(id));
+        expect(done.status).toBe(200);
+        expect((await done.json()).followedUpAt).toEqual(expect.any(String));
+
+        const snoozed = await followUp(jsonRequest("POST", { action: "snooze", days: 7 }), withId(id));
+        expect((await snoozed.json()).snoozedUntil).toEqual(expect.any(String));
+
+        expect((await followUp(jsonRequest("POST", { action: "snooze", days: 5 }), withId(id))).status).toBe(400);
+        expect((await followUp(jsonRequest("POST", { action: "ghost" }), withId(id))).status).toBe(400);
+    });
+
+    it("won't follow up a closed application or someone else's", async () => {
+        const { id } = await createOne();
+        await patch(jsonRequest("PATCH", { status: "rejected" }), withId(id));
+        expect((await followUp(jsonRequest("POST", { action: "followed-up" }), withId(id))).status).toBe(409);
+
+        const other = await createOne();
+        session.userId = `user_${randomUUID()}`;
+        expect((await followUp(jsonRequest("POST", { action: "followed-up" }), withId(other.id))).status).toBe(404);
+    });
+
+    it("lists new reminders and marks them seen", async () => {
+        const { id } = await createOne();
+        await collectDueReminders(db, new Date(Date.now() + 11 * 24 * 60 * 60 * 1000));
+
+        const unseen = await (await reminders(jsonRequest("GET"), noParams)).json();
+        expect(unseen).toEqual([{ applicationId: id, dueAt: expect.any(String) }]);
+
+        expect(await (await markSeen(jsonRequest("POST"), noParams)).json()).toEqual({ seen: 1 });
+        expect(await (await reminders(jsonRequest("GET"), noParams)).json()).toEqual([]);
     });
 });

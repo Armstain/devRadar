@@ -106,8 +106,11 @@ export async function saveJobPostToPipeline(
         if (row.applicationId) {
             const existing = await getApplication(tx, userId, row.applicationId);
             if (existing) {
-                const { id, company, position, status, link, notes, createdAt, updatedAt } = existing;
-                return { application: { id, company, position, status, link, notes, createdAt, updatedAt }, created: false };
+                const { id, company, position, status, link, notes, followedUpAt, snoozedUntil, createdAt, updatedAt } = existing;
+                return {
+                    application: { id, company, position, status, link, notes, followedUpAt, snoozedUntil, createdAt, updatedAt },
+                    created: false,
+                };
             }
         }
         const { extraction } = row;
