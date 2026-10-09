@@ -6,6 +6,8 @@ export interface ScoreCounts {
   related: number
   gap: number
   unverifiable: number
+  // Requirements only the CV speaks to
+  cv?: number
 }
 
 const positive = (verdict: string) => verdict === "Strong fit" || verdict === "Good fit"
@@ -18,12 +20,15 @@ export function ScoreReadout({
   verdict,
   counts,
   size = "lg",
+  note,
   className,
 }: {
   score: number | null
   verdict: string
   counts?: ScoreCounts
   size?: "md" | "lg"
+  // A line under the verdict, e.g. where the score comes from
+  note?: React.ReactNode
   className?: string
 }) {
   const parts = counts
@@ -31,6 +36,7 @@ export function ScoreReadout({
         { key: "strong", n: counts.strong, label: "in your code", bar: "bg-brand" },
         { key: "some", n: counts.some, label: "partly shown", bar: "bg-brand/45" },
         { key: "related", n: counts.related, label: "close", bar: "bg-brand/20" },
+        { key: "cv", n: counts.cv ?? 0, label: "on your CV", bar: "bg-brand/30 bg-[repeating-linear-gradient(135deg,transparent_0_3px,var(--panel)_3px_5px)]" },
         { key: "gap", n: counts.gap, label: counts.gap === 1 ? "gap" : "gaps", bar: "bg-warn" },
       ].filter((p) => p.n > 0)
     : []
@@ -52,6 +58,7 @@ export function ScoreReadout({
       <p className={cn("font-semibold", size === "lg" ? "text-lg" : "text-base", score !== null && !positive(verdict) && "text-warn-ink")}>
         {verdict}
       </p>
+      {note ? <p className="-mt-1.5 text-sm text-ink-soft tabular">{note}</p> : null}
       {total ? (
         <>
           <div className="flex h-2.5 gap-0.5" aria-hidden="true">

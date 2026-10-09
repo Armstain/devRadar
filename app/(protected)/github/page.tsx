@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle, Github, Globe, RefreshCw } from "lucide-react";
+import { CvPanel } from "@/components/cv/cv-panel";
 import { Scanning } from "@/components/skills/scanning";
 import { SkillProfileView } from "@/components/skills/skill-profile-view";
 import { Scope } from "@/components/scope";
@@ -67,7 +68,9 @@ export default function SkillProfilePage() {
       profile={state.profile}
       actions={<ProfileActions state={state} />}
       notice={state.status === "failed" && state.error ? <FailureBanner message={state.error} /> : null}
-    />
+    >
+      <CvPanel profile={state.profile} />
+    </SkillProfileView>
   );
 }
 
@@ -176,6 +179,7 @@ function ConnectPrompt() {
           <Scope className="mx-auto max-w-[260px]" />
         </div>
       </Panel>
+      <CvPanel profile={null} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Schibsted_Grotesk } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CvSignOutGuard } from "@/hooks/use-cv";
 import QueryProvider from "./providers/query-client-provider";
 
 const grotesk = Schibsted_Grotesk({
@@ -56,7 +57,10 @@ export default function RootLayout({
       <html suppressHydrationWarning lang="en" className={`${grotesk.variable} ${mono.variable}`}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <CvSignOutGuard />
+              {children}
+            </QueryProvider>
             <Toaster
               position="bottom-right"
               toastOptions={{
