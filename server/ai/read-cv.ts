@@ -19,8 +19,43 @@ Rules:
 - technologies lists the languages, frameworks, databases and tools mentioned for that role, as written.
 - Never invent a role, date or technology the CV doesn't state.`;
 
-const RESPONSE_SCHEMA = z.toJSONSchema(cvReadSchema) as Record<string, unknown>;
+// What the model is asked to produce: types and descriptions only. Gemini's
+// structured output rejects JSON Schema keywords like `pattern` and length
+// limits with a 400, so the strict checks happen afterwards, in cvReadSchema.
+const modelSchema = z.object({
+    roles: z.array(
+        z.object({
+            title: z.string().describe("Job title as written"),
+            company: z.string().nullable().describe("Employer, or null if not given"),
+            start: z.string().describe("YYYY-MM"),
+            end: z.string().nullable().describe("YYYY-MM, or null for a current role"),
+            technologies: z.array(z.string()).describe("Languages, frameworks, databases and tools named for this role"),
+        })
+    ),
+});
+const RESPONSE_SCHEMA = z.toJSONSchema(modelSchema) as Record<string, unknown>;
 delete RESPONSE_SCHEMA.$schema;
+
+// Accepts what a model plausibly returns ("2021", "2021-3") as YYYY-MM, and
+// trims oversized lists, before the strict check
+export function normalizeCvRead(raw: unknown): unknown {
+    if (!raw || typeof raw !== "object" || !Array.isArray((raw as { roles?: unknown }).roles)) return raw;
+    const month = (value: unknown) => {
+        if (typeof value !== "string") return value;
+        const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(value.trim());
+        return m ? `${m[1]}-${String(m[2] ?? 6).padStart(2, "0")}` : value;
+    };
+    return {
+        roles: (raw as { roles: Record<string, unknown>[] }).roles.slice(0, 25).map((r) => ({
+            ...r,
+            title: typeof r.title === "string" ? r.title.slice(0, 120) : r.title,
+            company: typeof r.company === "string" ? r.company.slice(0, 120) || null : r.company,
+            start: month(r.start),
+            end: r.end === null || r.end === undefined || /present|current|now/i.test(String(r.end)) ? null : month(r.end),
+            technologies: Array.isArray(r.technologies) ? r.technologies.filter((t) => typeof t === "string").map((t: string) => t.slice(0, 60)).slice(0, 40) : [],
+        })),
+    };
+}
 
 export class CvReadFailed extends Error {
     constructor(message: string) {
@@ -45,7 +80,7 @@ export function createGeminiCvReader(gemini: GoogleGenAI, model: string): CvRead
         } catch {
             throw new CvReadFailed("Model returned invalid JSON");
         }
-        const parsed = cvReadSchema.safeParse(json);
+        const parsed = cvReadSchema.safeParse(normalizeCvRead(json));
         if (!parsed.success) throw new CvReadFailed("Model output didn’t match the schema");
         return parsed.data;
     };

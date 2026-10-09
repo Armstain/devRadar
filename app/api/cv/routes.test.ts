@@ -47,9 +47,12 @@ describe("CV read API", () => {
         expect(sent).toContain("Senior Frontend Engineer, Parcel");
     });
 
-    it("answers 422 when the model's answer can't be used, and 503 without a key", async () => {
+    it("answers 422 for an unusable answer, 502 when the model call fails, 503 without a key", async () => {
         (reader.fn as ReturnType<typeof vi.fn>).mockRejectedValue(new CvReadFailed("bad json"));
         expect((await read(request({ text: CV }), noParams)).status).toBe(422);
+        // The model API itself refusing (e.g. a 400 from Gemini) is a 502, not a crash
+        (reader.fn as ReturnType<typeof vi.fn>).mockRejectedValue(Object.assign(new Error("INVALID_ARGUMENT"), { status: 400 }));
+        expect((await read(request({ text: CV }), noParams)).status).toBe(502);
         reader.fn = null;
         expect((await read(request({ text: CV }), noParams)).status).toBe(503);
     });

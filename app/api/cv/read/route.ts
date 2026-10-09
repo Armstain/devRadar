@@ -39,6 +39,10 @@ export const POST = authed("cv.read", async (request, { userId, log }) => {
             log.warn({ reason: error.message, ms: Math.round(performance.now() - started) }, "cv read failed");
             return errorResponse("The AI couldn’t read that CV. Your local reading is unchanged.", 422);
         }
-        throw error;
+        // The model API refused or failed. Log its status and message only:
+        // the error never carries the CV text, but don't rely on that
+        const status = (error as { status?: number }).status;
+        log.error({ status, reason: error instanceof Error ? error.message.slice(0, 300) : "unknown", ms: Math.round(performance.now() - started) }, "cv read: model call failed");
+        return errorResponse("The AI read isn’t available right now. Your local reading is unchanged.", 502);
     }
 });
