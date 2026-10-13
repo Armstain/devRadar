@@ -130,7 +130,7 @@ function ProfileHeader({ profile, actions }: { profile: SkillProfile; actions?: 
           >
             <dt className="label-quiet">{fact.label}</dt>
             <dd className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tracking-[-0.03em] tabular">{fact.value}</span>
+              <span className="text-3xl font-semibold tracking-[-0.03em]">{fact.value}</span>
               {fact.detail ? <span className="text-[13px] text-muted">{fact.detail}</span> : null}
             </dd>
           </div>

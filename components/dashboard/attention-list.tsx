@@ -67,7 +67,7 @@ export function AttentionList({
                           <span className="rounded-full bg-brand-soft px-1.5 py-px text-[11px] font-semibold text-brand">New</span>
                         ) : null}
                       </span>
-                      <span className="truncate text-[13px] text-muted">
+                      <span className="line-clamp-2 text-[13px] text-muted sm:line-clamp-none sm:truncate">
                         {app.position} · {STATUS_LABELS[app.status].toLowerCase()} · {nextStep(app, isOverdue)}
                       </span>
                     </span>

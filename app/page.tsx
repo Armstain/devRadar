@@ -56,22 +56,23 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <figure className="relative min-w-0" aria-label="A sample reading">
-          <figcaption className="absolute left-0 top-0 text-[12.5px] text-muted sm:left-4">Sample scan · 9 repositories</figcaption>
-          <RadarChart
-            axes={SAMPLE_AXES}
-            gap={SAMPLE_GAP}
-            className="mx-auto w-full max-w-[640px]"
-            label={SAMPLE_LABEL}
-          />
-          <div className="absolute right-0 top-6 text-right sm:right-4">
-            <p className="text-[64px] font-semibold leading-[0.85] tracking-[-0.06em] tabular sm:text-[84px]">92</p>
-            <p className="mt-2 text-sm text-ink-soft">
+        <figure className="relative flex min-w-0 flex-col gap-4 sm:block" aria-label="A sample reading">
+          <figcaption className="text-[12.5px] text-muted sm:absolute sm:left-4 sm:top-0">Sample scan · 9 repositories</figcaption>
+          {/* On phones the reading sits above the dial; from sm up it floats in the corner */}
+          <div className="order-1 flex items-end gap-3 sm:absolute sm:right-4 sm:top-6 sm:block sm:text-right">
+            <p className="text-[56px] font-semibold leading-[0.85] tracking-[-0.06em] sm:text-[84px]">92</p>
+            <p className="text-sm text-ink-soft sm:mt-2">
               fit for Senior Frontend
               <br />
               at Lumen Labs
             </p>
           </div>
+          <RadarChart
+            axes={SAMPLE_AXES}
+            gap={SAMPLE_GAP}
+            className="order-2 mx-auto w-full max-w-[640px]"
+            label={SAMPLE_LABEL}
+          />
         </figure>
       </main>
 

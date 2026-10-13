@@ -58,7 +58,7 @@ export function ScoreReadout({
       <p className={cn("font-semibold", size === "lg" ? "text-lg" : "text-base", score !== null && !positive(verdict) && "text-warn-ink")}>
         {verdict}
       </p>
-      {note ? <p className="-mt-1.5 text-sm text-ink-soft tabular">{note}</p> : null}
+      {note ? <p className="-mt-1.5 text-sm text-ink-soft">{note}</p> : null}
       {total ? (
         <>
           <div className="flex h-2.5 gap-0.5" aria-hidden="true">

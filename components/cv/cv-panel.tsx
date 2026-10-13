@@ -241,7 +241,7 @@ function Group({
             <li key={item.key} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-[13px]">
               <span aria-hidden="true" className={cn("inline-block size-2 shrink-0 rounded-full", marker, marker.includes("tri") && "h-2 w-[9px]")} />
               {item.name}
-              {item.note ? <span className="text-[11px] text-muted tabular">{item.note}</span> : null}
+              {item.note ? <span className="text-[11px] text-muted">{item.note}</span> : null}
             </li>
           ))}
           {total > items.length ? <li className="px-1 py-1 text-[13px] text-muted">and {total - items.length} more</li> : null}
